@@ -40,7 +40,7 @@ git clone https://github.com/pixled/esp-pixled-driver
 Then, the component can be imported into any esp-idf project with the following
 statement, added to the appropriate `CMakeLists.txt` :
 ```
-set(EXTRA_COMPONENT_DIRS /path/to/esp-pixled-driver)
+set(EXTRA_COMPONENT_DIRS /path/to/driver/installation/folder)
 ```
 
 ## Embedded in project
