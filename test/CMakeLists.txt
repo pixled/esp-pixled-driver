@@ -1,4 +1,4 @@
 idf_component_register(
-	SRCS "main.cpp" "../src/pixled_driver.cpp"
+	SRC_DIRS "." "../src"
 	INCLUDE_DIRS "../include"
 	)

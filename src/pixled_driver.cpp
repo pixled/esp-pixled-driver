@@ -1,5 +1,5 @@
 #include "sdkconfig.h"
-#include "pixled_driver.h"
+#include "pixled_driver.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -8,104 +8,18 @@
 #error "C++ exception handling must be enabled within make menuconfig. See Compiler Options > Enable C++ Exceptions."
 #endif
 
-rgb_pixel HSBtoRGB(float hue, float saturation, float brightness) {
 
-	double      hh, p, q, t, ff;
-	long        i;
-	double      r_out;
-	double      g_out;
-	double 	    b_out;
+/*#ifdef CONFIG_RGB_TO_RGBW_1*/
+	//#define RGB_TO_RGBW_1 CONFIG_RGB_TO_RGBW_1
+//#else
+	//#define RGB_TO_RGBW ComplexRgbToRgbwConverter
+//#endif
 
-	if(saturation <= 0.0) {       // < is bogus, just shuts up warnings
-			r_out = brightness;
-			g_out = brightness;
-			b_out = brightness;
-			return rgb_pixel(r_out * 255, g_out * 255, b_out * 255);
-	}
-	hh = hue;
-	if(hh >= 360.0) hh = 0.0;
-	hh /= 60.0;
-	i = (long)hh;
-	ff = hh - i;
-	p = brightness * (1.0 - saturation);
-	q = brightness * (1.0 - (saturation * ff));
-	t = brightness * (1.0 - (saturation * (1.0 - ff)));
-
-	switch(i) {
-	case 0:
-			r_out = brightness;
-			g_out = t;
-			b_out = p;
-			break;
-	case 1:
-			r_out = q;
-			g_out = brightness;
-			b_out = p;
-			break;
-	case 2:
-			r_out = p;
-			g_out = brightness;
-			b_out = t;
-			break;
-
-	case 3:
-			r_out = p;
-			g_out = q;
-			b_out = brightness;
-			break;
-	case 4:
-			r_out = t;
-			g_out = p;
-			b_out = brightness;
-			break;
-	case 5:
-	default:
-			r_out = brightness;
-			g_out = p;
-			b_out = q;
-			break;
-	}
-
-	return rgb_pixel(r_out * 255, g_out * 255, b_out * 255);
-}
-
-rgbw_pixel RGBtoRGBW1(uint8_t red, uint8_t green, uint8_t blue) {
-	uint8_t white = std::min(red, std::min(green, blue));
-	return rgbw_pixel(
-		red - white,
-		green - white,
-		blue - white,
-		white
-	);
-}
-
-rgbw_pixel RGBtoRGBW2(uint8_t red, uint8_t green, uint8_t blue) {
-	//Get the maximum between R, G, and B
-	float tM = std::max(red, std::max(green, blue));
-
-	//If the maximum value is 0, immediately return pure black.
-	if(tM == 0)
-	   { return rgbw_pixel(0, 0, 0, 0); }
-
-	//This section serves to figure out what the color with 100% hue is
-	float multiplier = 255.0f / tM;
-	float hR = red * multiplier;
-	float hG = green * multiplier;
-	float hB = blue * multiplier;
-
-	//This calculates the Whiteness (not strictly speaking Luminance) of the color
-	float M = std::max(hR, std::max(hG, hB));
-	float m = std::min(hR, std::min(hG, hB));
-	float Luminance = ((M + m) / 2.0f - 127.5f) * (255.0f/127.5f) / multiplier;
-
-	//Calculate the output values
-	uint8_t Wo = Luminance;
-	uint8_t  Bo = blue - Luminance;
-	uint8_t  Ro = red - Luminance;
-	uint8_t  Go = green - Luminance;
-
-	return rgbw_pixel(Ro, Go, Bo, Wo);
-}
+//#ifdef CONFIG_RGB_TO_RGBW_2
+	//#define RGB_TO_RGBW_2 CONFIG_RGB_TO_RGBW_2
+//#else
+	//#define RGB_TO_RGBW 
+/*#endif*/
 
 /**
 * @brief rgb_pixel constructor.
@@ -348,18 +262,22 @@ SK6812::SK6812(gpio_num_t gpioNum, uint16_t pixel_count, int channel):
 * @param t1h high value duration for bit 1, expressed in RMT ticks.
 * @param t1l low value duration for bit 0, expressed in RMT ticks.
 */
-RgbwStrip::RgbwStrip(gpio_num_t gpioNum, uint16_t pixel_count, int channel, uint8_t t0h, uint8_t t0l, uint8_t t1h, uint8_t t1l):
-	Strip(gpioNum, pixel_count, channel, t0h, t0l, t1h, t1l){
-		this->pixels     = new rgbw_pixel[pixel_count];
-		this->items      = new rmt_item32_t[pixel_count * 32 + 1];
-		if (RGB_TO_RGBW_1) {
-			ESP_LOGI(PIXLED_LOG_TAG, "RGB_TO_RGBW_1 selected");
-			this->rgb2rgbwConverter = RGBtoRGBW1;
-		}
-		else if (RGB_TO_RGBW_2) {
-			ESP_LOGI(PIXLED_LOG_TAG, "RGB_TO_RGBW_2 selected");
-			this->rgb2rgbwConverter = RGBtoRGBW2;
-		}
+RgbwStrip::RgbwStrip(gpio_num_t gpioNum, uint16_t pixel_count, int channel, uint8_t t0h, uint8_t t0l, uint8_t t1h, uint8_t t1l, RgbToRgbwConverter&& rgbToRgbw):
+	Strip(gpioNum, pixel_count, channel, t0h, t0l, t1h, t1l),
+	pixels(new rgbw_pixel[pixel_count]),
+	rgbToRgbw(rgbToRgbw)
+{
+	this->items = new rmt_item32_t[pixel_count * 32 + 1];
+		/*
+		 *if (RGB_TO_RGBW_1) {
+		 *    ESP_LOGI(PIXLED_LOG_TAG, "RGB_TO_RGBW_1 selected");
+		 *    this->rgb2rgbwConverter = RGBtoRGBW1;
+		 *}
+		 *else if (RGB_TO_RGBW_2) {
+		 *    ESP_LOGI(PIXLED_LOG_TAG, "RGB_TO_RGBW_2 selected");
+		 *    this->rgb2rgbwConverter = RGBtoRGBW2;
+		 *}
+		 */
 		clear();
 	};
 
@@ -368,9 +286,11 @@ RgbwStrip::RgbwStrip(gpio_num_t gpioNum, uint16_t pixel_count, int channel, uint
 *
 * @param converter reference to the converter function.
 */
-void RgbwStrip::setRgbToRgbwConverter(rgbw_pixel (*converter) (uint8_t, uint8_t, uint8_t)) {
-	this->rgb2rgbwConverter = converter;
-}
+/*
+ *void RgbwStrip::setRgbToRgbwConverter(rgbw_pixel (*converter) (uint8_t, uint8_t, uint8_t)) {
+ *    this->rgb2rgbwConverter = converter;
+ *}
+ */
 
 /**
 * @brief SK6812W constructor.
@@ -388,7 +308,8 @@ SK6812W::SK6812W(gpio_num_t gpioNum, uint16_t pixel_count, int channel):
 		SK6812W_T0H * RMT_RATIO,
 		SK6812W_T0L * RMT_RATIO,
 		SK6812W_T1H * RMT_RATIO,
-		SK6812W_T1L * RMT_RATIO
+		SK6812W_T1L * RMT_RATIO,
+		ComplexRgbToRgbwConverter()
 	){
 		this->color_order = (char*) "GRB";
 	};
@@ -562,7 +483,7 @@ void RgbStrip::setPixel(uint16_t index, uint8_t red, uint8_t green, uint8_t blue
  *
  */
 void RgbwStrip::setPixel(uint16_t index, uint8_t red, uint8_t green, uint8_t blue) {
-	this->pixels[index] = this->rgb2rgbwConverter(red, green, blue);
+	this->pixels[index] = this->rgbToRgbw({red, green, blue});
 } // setPixel
 
 /**
@@ -576,7 +497,7 @@ void RgbwStrip::setPixel(uint16_t index, uint8_t red, uint8_t green, uint8_t blu
  * @param pixel rgb pixel
  */
 void RgbwStrip::setPixel(uint16_t index, rgb_pixel pixel) {
-	this->pixels[index] = this->rgb2rgbwConverter(pixel.red, pixel.green, pixel.blue);
+	this->pixels[index] = this->rgbToRgbw(pixel);
 } // setPixel
 
 /**
@@ -666,7 +587,7 @@ void RgbwStrip::setPixel(uint16_t index, uint32_t pixel) {
  * @param brightness The amount of brightness in the pixel (0-1).
  */
 void RgbStrip::setHsbPixel(uint16_t index, float hue, float saturation, float brightness) {
-	this->pixels[index] = HSBtoRGB(hue, saturation, brightness);
+	this->pixels[index] = hsbToRgb(hue, saturation, brightness);
 } // setHsbPixel
 
 /**
@@ -678,7 +599,7 @@ void RgbStrip::setHsbPixel(uint16_t index, float hue, float saturation, float br
  * @param hsb_pixel HSB colors.
  */
 void RgbStrip::setHsbPixel(uint16_t index, hsb_pixel hsb_pixel) {
-	this->pixels[index] = HSBtoRGB(hsb_pixel.hue, hsb_pixel.saturation, hsb_pixel.brightness);
+	this->pixels[index] = hsbToRgb(hsb_pixel.hue, hsb_pixel.saturation, hsb_pixel.brightness);
 } // setHsbPixel
 
 /**
@@ -694,8 +615,9 @@ void RgbStrip::setHsbPixel(uint16_t index, hsb_pixel hsb_pixel) {
 void RgbwStrip::setHsbPixel(uint16_t index, hsb_pixel hsb_pixel) {
 	assert(index < pixel_count);
 
-	rgb_pixel _rgb_pixel = HSBtoRGB(hsb_pixel.hue, hsb_pixel.saturation, hsb_pixel.brightness);
-	this->pixels[index] = this->rgb2rgbwConverter(_rgb_pixel.red, _rgb_pixel.green, _rgb_pixel.blue);
+	this->pixels[index] = rgbToRgbw(
+			hsbToRgb(hsb_pixel.hue, hsb_pixel.saturation, hsb_pixel.brightness)
+			);
 } // setHsbPixel
 
 
@@ -714,8 +636,7 @@ void RgbwStrip::setHsbPixel(uint16_t index, hsb_pixel hsb_pixel) {
 void RgbwStrip::setHsbPixel(uint16_t index, float hue, float saturation, float brightness) {
 	assert(index < pixel_count);
 
-	rgb_pixel _rgb_pixel = HSBtoRGB(hue, saturation, brightness);
-	this->pixels[index] = this->rgb2rgbwConverter(_rgb_pixel.red, _rgb_pixel.green, _rgb_pixel.blue);
+	this->pixels[index] = this->rgbToRgbw(hsbToRgb(hue, saturation, brightness));
 } // setHsbPixel
 
 
@@ -767,5 +688,5 @@ RgbStrip::~RgbStrip() {
  * @brief RgbwStrip instance destructor.
  */
 RgbwStrip::~RgbwStrip() {
-	delete this->pixels;
+	delete[] this->pixels;
 }

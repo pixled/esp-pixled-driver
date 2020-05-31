@@ -6,19 +6,11 @@
 #include <driver/rmt.h>
 #include <driver/gpio.h>
 #include "esp_log.h"
-#include "constants.h"
+#include "constants.hpp"
+#include "pixel.hpp"
+#include "output.hpp"
+#include "converters.hpp"
 
-#ifdef CONFIG_RGB_TO_RGBW_1
-	#define RGB_TO_RGBW_1 CONFIG_RGB_TO_RGBW_1
-#else
-	#define RGB_TO_RGBW_1 false
-#endif
-
-#ifdef CONFIG_RGB_TO_RGBW_2
-	#define RGB_TO_RGBW_2 CONFIG_RGB_TO_RGBW_2
-#else
-	#define RGB_TO_RGBW_2 true
-#endif
 
 static const char* PIXLED_LOG_TAG = "PIXLED_DRIVER";
 
@@ -100,151 +92,55 @@ static const char* PIXLED_LOG_TAG = "PIXLED_DRIVER";
  */
 
 /**
- * @brief A data type representing an RGB pixel.
- */
-struct rgb_pixel {
-	rgb_pixel();
-	rgb_pixel(uint8_t red, uint8_t green, uint8_t blue);
-	/**
-	 * @brief The red component of the pixel.
-	 */
-	uint8_t red;
-	/**
-	 * @brief The green component of the pixel.
-	 */
-	uint8_t green;
-	/**
-	 * @brief The blue component of the pixel.
-	 */
-	uint8_t blue;
-};
-
-/**
- * @brief A data type representing an RGBW pixel.
- */
-struct rgbw_pixel : rgb_pixel {
-	rgbw_pixel();
-	rgbw_pixel(uint8_t red, uint8_t green, uint8_t blue, uint8_t white);
-	/**
-	 * @brief The white component of the pixel.
-	 */
-	uint8_t white;
-};
-
-/**
- * @brief A data type representing an HSB pixel.
- */
-struct hsb_pixel {
-	hsb_pixel();
-	hsb_pixel(float hue, float saturation, float brightness);
-	/**
-	 * @brief Color hue, in [0;360]
-	 */
-	float hue;
-
-	/**
-	 * @brief Color saturation, in [0;1]
-	 */
-	float saturation;
-
-	/**
-	 * @brief Color brightness, in [0;1]
-	 */
-	float brightness;
-};
-
-/**
- * @fn static rgb_pixel HSBtoRGB(float hue, float saturation, float brightness)
- *
- * @brief Converts the specified HSB color to an RGB color.
- *
- * @param hue between 0 and 360
- * @param saturation between 0 and 1
- * @param brightness between 0 and 1
- * @return converted rgb pixel
- */
-rgb_pixel HSBtoRGB(float hue, float saturation, float brightness);
-
-/**
- * @fn static rgbw_pixel RGBtoRGBW1(uint8_t red, uint8_t green, uint8_t blue)
- *
- * @brief First method to convert RGB to RGBW.
- *
- * @code
- *    w = min(r, g, b)
- *    r, g, b = r - w, g - w, b - w
- * @endcode
- *
- * @param red between 0 and 255
- * @param green between 0 and 255
- * @param blue between 0 and 255
- *
- * @return converted rgbw pixel
- */
-rgbw_pixel RGBtoRGBW1(uint8_t red, uint8_t green, uint8_t blue); 
-
-/**
- * @fn static rgbw_pixel RGBtoRGBW2(uint8_t red, uint8_t green, uint8_t blue)
- *
- * @brief Second method to convert RGB to RGBW.
- *
- * Based on https://stackoverflow.com/questions/40312216/converting-rgb-to-rgbw
- *
- * @param red between 0 and 255
- * @param green between 0 and 255
- * @param blue between 0 and 255
- *
- * @return converted rgbw pixel
- */
-rgbw_pixel RGBtoRGBW2(uint8_t red, uint8_t green, uint8_t blue);
-
-/**
  * @brief General and abstract led Strip class.
  */
 class Strip {
-public:
-	Strip(gpio_num_t gpio_num, uint16_t pixel_count, int channel, uint8_t t0h, uint8_t t0l, uint8_t t1h, uint8_t t1l);
-	virtual void show() = 0;
-	void setColorOrder(char* order);
-	virtual void setPixel(uint16_t index, uint8_t red, uint8_t green, uint8_t blue) = 0;
-	virtual void setPixel(uint16_t index, uint32_t pixel) = 0;
-	virtual void setPixel(uint16_t index, rgb_pixel pixel) = 0;
-	virtual void setHsbPixel(uint16_t index, float hue, float saturation, float brightness) = 0;
-	virtual void setHsbPixel(uint16_t index, hsb_pixel pixel) = 0;
-	virtual void clear() = 0;
-	virtual ~Strip();
+	public:
+		Strip(gpio_num_t gpio_num, uint16_t pixel_count, int channel, uint8_t t0h, uint8_t t0l, uint8_t t1h, uint8_t t1l);
+		virtual void show() = 0;
+		void setColorOrder(char* order);
+		virtual void setPixel(uint16_t index, uint8_t red, uint8_t green, uint8_t blue) = 0;
+		virtual void setPixel(uint16_t index, uint32_t pixel) = 0;
+		virtual void setPixel(uint16_t index, rgb_pixel pixel) = 0;
+		virtual void setHsbPixel(uint16_t index, float hue, float saturation, float brightness) = 0;
+		virtual void setHsbPixel(uint16_t index, hsb_pixel pixel) = 0;
+		virtual void clear() = 0;
+		virtual ~Strip();
 
-protected:
-	uint16_t pixel_count;
-	char* color_order;
+	protected:
+		uint16_t pixel_count;
+		char* color_order;
 
-	rmt_channel_t  channel;
-	rmt_item32_t*  items;
+		rmt_channel_t  channel;
+		rmt_item32_t*  items;
 
-	uint8_t t0h;
-	uint8_t t0l;
-	uint8_t t1h;
-	uint8_t t1l;
+		uint8_t t0h;
+		uint8_t t0l;
+		uint8_t t1h;
+		uint8_t t1l;
 
-	void setItem1(rmt_item32_t* pItem);
-	void setItem0(rmt_item32_t* pItem);
+		void setItem1(rmt_item32_t* pItem);
+		void setItem0(rmt_item32_t* pItem);
 };
 
 /**
  * @brief RGB strip class.
  */
 class RgbStrip: public Strip {
-public:
-	RgbStrip(gpio_num_t gpio_num, uint16_t pixel_count, int channel, uint8_t t0h, uint8_t t0l, uint8_t t1h, uint8_t t1l);
-	void setPixel(uint16_t index, uint8_t red, uint8_t green, uint8_t blue);
-	void setPixel(uint16_t index, rgb_pixel pixel);
-	void setPixel(uint16_t index, uint32_t pixel);
-	void setHsbPixel(uint16_t index, float hue, float saturation, float brightness);
-	void setHsbPixel(uint16_t index, hsb_pixel pixel);
-	void clear();
-	void show();
-	virtual ~RgbStrip();
-	rgb_pixel* pixels;
+	protected:
+		HsbToRgbConverter hsbToRgb;
+
+	public:
+		RgbStrip(gpio_num_t gpio_num, uint16_t pixel_count, int channel, uint8_t t0h, uint8_t t0l, uint8_t t1h, uint8_t t1l);
+		void setPixel(uint16_t index, uint8_t red, uint8_t green, uint8_t blue);
+		void setPixel(uint16_t index, rgb_pixel pixel);
+		void setPixel(uint16_t index, uint32_t pixel);
+		void setHsbPixel(uint16_t index, float hue, float saturation, float brightness);
+		void setHsbPixel(uint16_t index, hsb_pixel pixel);
+		void clear();
+		void show();
+		virtual ~RgbStrip();
+		rgb_pixel* pixels;
 };
 
 /**
@@ -252,22 +148,28 @@ public:
  */
 class RgbwStrip:  public Strip {
 public:
-	RgbwStrip(gpio_num_t gpio_num, uint16_t pixel_count, int channel, uint8_t t0h, uint8_t t0l, uint8_t t1h, uint8_t t1l);
+	RgbwStrip(gpio_num_t gpio_num, uint16_t pixel_count, int channel, uint8_t t0h, uint8_t t0l, uint8_t t1h, uint8_t t1l, RgbToRgbwConverter&& converter);
+
 	void setPixel(uint16_t index, uint8_t red, uint8_t green, uint8_t blue);
 	void setPixel(uint16_t index, rgb_pixel pixel);
 	void setPixel(uint16_t index, rgbw_pixel pixel);
 	void setPixel(uint16_t index, uint32_t pixel);
+
 	void setHsbPixel(uint16_t index, float hue, float saturation, float brightness);
 	void setHsbPixel(uint16_t index, hsb_pixel pixel);
+
 	void setPixel(uint16_t index, uint8_t red, uint8_t green, uint8_t blue, uint8_t white);
+
 	void clear();
 	void show();
-	void setRgbToRgbwConverter(rgbw_pixel (*converter) (uint8_t, uint8_t, uint8_t));
+	//void setRgbToRgbwConverter(rgbw_pixel (*converter) (uint8_t, uint8_t, uint8_t));
 	virtual ~RgbwStrip();
 	rgbw_pixel* pixels;
 
 private:
-	rgbw_pixel (*rgb2rgbwConverter) (uint8_t, uint8_t, uint8_t);
+	HsbToRgbConverter hsbToRgb;
+	RgbToRgbwConverter& rgbToRgbw;
+	//rgbw_pixel (*rgb2rgbwConverter) (uint8_t, uint8_t, uint8_t);
 };
 
 /**
