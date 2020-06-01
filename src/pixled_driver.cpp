@@ -103,9 +103,9 @@ hsb_pixel::hsb_pixel()
  */
 void Strip::setItem1(rmt_item32_t* pItem) {
 	pItem->level0    = 1;
-	pItem->duration0 = this->t1h;
+	pItem->duration0 = strip_config.t1h;
 	pItem->level1    = 0;
-	pItem->duration1 = this->t1l;
+	pItem->duration1 = strip_config.t1l;
 } // setItem1
 
 
@@ -125,9 +125,9 @@ void Strip::setItem1(rmt_item32_t* pItem) {
  */
 void Strip::setItem0(rmt_item32_t* pItem) {
 	pItem->level0    = 1;
-	pItem->duration0 = this->t0h;
+	pItem->duration0 = strip_config.t0h;
 	pItem->level1    = 0;
-	pItem->duration1 = this->t0l;
+	pItem->duration1 = strip_config.t0l;
 } // setItem0
 
 
@@ -141,26 +141,6 @@ static void setTerminator(rmt_item32_t* pItem) {
 	pItem->duration1 = 0;
 } // setTerminator
 
-/*
- * Internal function not exposed.  Get the pixel channel color from the channel
- * type which should be one of 'R', 'G' or 'B'.
- */
-static uint8_t getChannelValueByType(char type, rgb_pixel pixel) {
-	switch (type) {
-		case 'r':
-		case 'R':
-			return pixel.red;
-		case 'b':
-		case 'B':
-			return pixel.blue;
-		case 'g':
-		case 'G':
-			return pixel.green;
-		default:
-			ESP_LOGW(PIXLED_LOG_TAG, "Unknown color channel 0x%2x", type);
-			return 0;
-	}
-} // getChannelValueByType
 
 /**
  * @brief RgbStrip constructor.
@@ -177,75 +157,12 @@ static uint8_t getChannelValueByType(char type, rgb_pixel pixel) {
  * @param t1h high value duration for bit 1, expressed in RMT ticks.
  * @param t1l low value duration for bit 0, expressed in RMT ticks.
  */
-RgbStrip::RgbStrip(gpio_num_t gpioNum, uint16_t pixel_count, int channel, uint8_t t0h, uint8_t t0l, uint8_t t1h, uint8_t t1l):
-	Strip(gpioNum, pixel_count, channel, t0h, t0l, t1h, t1l){
-		this->pixels     = new rgb_pixel[pixel_count];
+RgbStrip::RgbStrip(gpio_num_t gpioNum, uint16_t pixel_count, int channel, RgbStripConfig& config):
+	Strip(gpioNum, pixel_count, channel, config), rgb_strip_config(config), pixels(new rgb_pixel[pixel_count])  {
 		this->items      = new rmt_item32_t[pixel_count * 24 + 1];
 		clear();
 	};
 
-/**
-* @brief WS2812 (RGB) constructor.
-*
-* @param gpioNum Led Strip GPIO.
-* @param pixel_count Number of leds.
-* @param channel RMT channel to use. See https://docs.espressif.com/projects/esp-idf/en/latest/api-reference/peripherals/rmt.html#enumerations
-*
-*/
-WS2812::WS2812(gpio_num_t gpioNum, uint16_t pixel_count, int channel):
-	RgbStrip(
-		gpioNum,
-		pixel_count,
-		channel,
-		WS2812_T0H * RMT_RATIO,
-		WS2812_T0L * RMT_RATIO,
-		WS2812_T1H * RMT_RATIO,
-		WS2812_T1L * RMT_RATIO
-	){
-		this->color_order = (char*) "GRB";
-	};
-
-/**
-* @brief WS2815 (RGB) constructor.
-*
-* @param gpioNum Led Strip GPIO.
-* @param pixel_count Number of leds.
-* @param channel RMT channel to use. See https://docs.espressif.com/projects/esp-idf/en/latest/api-reference/peripherals/rmt.html#enumerations
-*
-*/
-WS2815::WS2815(gpio_num_t gpioNum, uint16_t pixel_count, int channel):
-	RgbStrip(
-		gpioNum,
-		pixel_count,
-		channel,
-		WS2815_T0H * RMT_RATIO,
-		WS2815_T0L * RMT_RATIO,
-		WS2815_T1H * RMT_RATIO,
-		WS2815_T1L * RMT_RATIO
-	){
-		this->color_order = (char*) "GRB";
-	};
-
-/**
-*	@brief SK6812 (RGB) constructor.
-*
-* @param gpioNum Led Strip GPIO.
-* @param pixel_count Number of leds.
-* @param channel RMT channel to use. See https://docs.espressif.com/projects/esp-idf/en/latest/api-reference/peripherals/rmt.html#enumerations
-*
-*/
-SK6812::SK6812(gpio_num_t gpioNum, uint16_t pixel_count, int channel):
-	RgbStrip(
-		gpioNum,
-		pixel_count,
-		channel,
-		SK6812_T0H * RMT_RATIO,
-		SK6812_T0L * RMT_RATIO,
-		SK6812_T1H * RMT_RATIO,
-		SK6812_T1L * RMT_RATIO
-	){
-		this->color_order = (char*) "GRB";
-	};
 
 /**
 * @brief RgbwStrip constructor.
@@ -262,10 +179,9 @@ SK6812::SK6812(gpio_num_t gpioNum, uint16_t pixel_count, int channel):
 * @param t1h high value duration for bit 1, expressed in RMT ticks.
 * @param t1l low value duration for bit 0, expressed in RMT ticks.
 */
-RgbwStrip::RgbwStrip(gpio_num_t gpioNum, uint16_t pixel_count, int channel, uint8_t t0h, uint8_t t0l, uint8_t t1h, uint8_t t1l, RgbToRgbwConverter&& rgbToRgbw):
-	Strip(gpioNum, pixel_count, channel, t0h, t0l, t1h, t1l),
-	pixels(new rgbw_pixel[pixel_count]),
-	rgbToRgbw(rgbToRgbw)
+RgbwStrip::RgbwStrip(gpio_num_t gpioNum, uint16_t pixel_count, int channel, RgbwStripConfig& config):
+	Strip(gpioNum, pixel_count, channel, config), rgbw_strip_config(config),
+	rgb_to_rgbw(), pixels(new rgbw_pixel[pixel_count])
 {
 	this->items = new rmt_item32_t[pixel_count * 32 + 1];
 		/*
@@ -281,38 +197,6 @@ RgbwStrip::RgbwStrip(gpio_num_t gpioNum, uint16_t pixel_count, int channel, uint
 		clear();
 	};
 
-/**
-* @brief Sets the RGB to RGBW converter used for RGBW strips.
-*
-* @param converter reference to the converter function.
-*/
-/*
- *void RgbwStrip::setRgbToRgbwConverter(rgbw_pixel (*converter) (uint8_t, uint8_t, uint8_t)) {
- *    this->rgb2rgbwConverter = converter;
- *}
- */
-
-/**
-* @brief SK6812W constructor.
-*
-* @param gpioNum Led Strip GPIO.
-* @param pixel_count Number of leds.
-* @param channel RMT channel to use. See https://docs.espressif.com/projects/esp-idf/en/latest/api-reference/peripherals/rmt.html#enumerations
-*
-*/
-SK6812W::SK6812W(gpio_num_t gpioNum, uint16_t pixel_count, int channel):
-	RgbwStrip(
-		gpioNum,
-		pixel_count,
-		channel,
-		SK6812W_T0H * RMT_RATIO,
-		SK6812W_T0L * RMT_RATIO,
-		SK6812W_T1H * RMT_RATIO,
-		SK6812W_T1L * RMT_RATIO,
-		ComplexRgbToRgbwConverter()
-	){
-		this->color_order = (char*) "GRB";
-	};
 
 /**
  * @brief Construct a wrapper for the pixels.
@@ -332,30 +216,26 @@ SK6812W::SK6812W(gpio_num_t gpioNum, uint16_t pixel_count, int channel):
  * @param t1l low value duration for bit 0, expressed in RMT ticks.
  *
  */
-Strip::Strip(gpio_num_t gpio_num, uint16_t pixel_count, int channel, uint8_t t0h, uint8_t t0l, uint8_t t1h, uint8_t t1l) {
-	this->t0h = t0h;
-	this->t0l = t0l;
-	this->t1h = t1h;
-	this->t1l = t1l;
-
+Strip::Strip(gpio_num_t gpio_num, uint16_t pixel_count, int channel, StripConfig& config)
+	: strip_config(config) {
 	this->pixel_count = pixel_count;
 	this->channel    = (rmt_channel_t) channel;
 
-	rmt_config_t config;
-	config.rmt_mode                  = RMT_MODE_TX;
-	config.channel                   = this->channel;
-	config.gpio_num                  = gpio_num;
-	config.mem_block_num             = 8 - this->channel;
-	config.clk_div                   = 8;
-	config.tx_config.loop_en         = 0;
-	config.tx_config.carrier_en      = 0;
-	config.tx_config.idle_output_en  = 1;
-	config.tx_config.idle_level      = (rmt_idle_level_t) 0;
-	config.tx_config.carrier_freq_hz = 10000;
-	config.tx_config.carrier_level   = (rmt_carrier_level_t)1;
-	config.tx_config.carrier_duty_percent = 50;
+	rmt_config_t _rmt_config;
+	_rmt_config.rmt_mode                  = RMT_MODE_TX;
+	_rmt_config.channel                   = this->channel;
+	_rmt_config.gpio_num                  = gpio_num;
+	_rmt_config.mem_block_num             = 8 - this->channel;
+	_rmt_config.clk_div                   = 8;
+	_rmt_config.tx_config.loop_en         = 0;
+	_rmt_config.tx_config.carrier_en      = 0;
+	_rmt_config.tx_config.idle_output_en  = 1;
+	_rmt_config.tx_config.idle_level      = (rmt_idle_level_t) 0;
+	_rmt_config.tx_config.carrier_freq_hz = 10000;
+	_rmt_config.tx_config.carrier_level   = (rmt_carrier_level_t)1;
+	_rmt_config.tx_config.carrier_duty_percent = 50;
 
-	ESP_ERROR_CHECK(rmt_config(&config));
+	ESP_ERROR_CHECK(rmt_config(&_rmt_config));
 	ESP_ERROR_CHECK(rmt_driver_install(this->channel, 0, 0));
 } // Strip
 
@@ -369,10 +249,12 @@ void RgbStrip::show() {
 	auto pCurrentItem = this->items;
 
 	for (uint16_t i = 0; i < this->pixel_count; i++) {
+		uint8_t rgb[3];
+		rgb_strip_config.serializer.serialize(this->pixels[i], rgb);
 		uint32_t currentPixel =
-				(getChannelValueByType(this->color_order[0], this->pixels[i]) << 16) |
-				(getChannelValueByType(this->color_order[1], this->pixels[i]) << 8)  |
-				(getChannelValueByType(this->color_order[2], this->pixels[i]));
+				(rgb[0] << 16) |
+				(rgb[1] << 8)  |
+				rgb[2];
 
 		ESP_LOGD(PIXLED_LOG_TAG, "Pixel value: %x", currentPixel);
 		for (int8_t j = 23; j >= 0; j--) {
@@ -403,11 +285,13 @@ void RgbwStrip::show() {
 	auto pCurrentItem = this->items;
 
 	for (uint16_t i = 0; i < this->pixel_count; i++) {
+		uint8_t rgbw[4];
+		rgbw_strip_config.serializer.serialize(pixels[i], rgbw);
 		uint32_t currentPixel =
-				(getChannelValueByType(this->color_order[0], this->pixels[i]) << 24) |
-				(getChannelValueByType(this->color_order[1], this->pixels[i]) << 16) |
-				(getChannelValueByType(this->color_order[2], this->pixels[i]) << 8) |
-				this->pixels[i].white;
+				(rgbw[0] << 24) |
+				(rgbw[1] << 16) |
+				(rgbw[2] << 8) |
+				rgbw[3];
 
 		ESP_LOGD(PIXLED_LOG_TAG, "Pixel value: %x", currentPixel);
 		for (int8_t j = 31; j >= 0; j--) {
@@ -428,28 +312,6 @@ void RgbwStrip::show() {
 	// Show the pixels.
 	ESP_ERROR_CHECK(rmt_write_items(this->channel, this->items, this->pixel_count * 32, 1 /* wait till done */));
 } // show
-
-
-/**
- * @brief Set the color order of data sent to the LEDs.
- *
- * Data is sent to the WS2812s in a serial fashion.  There are 8 bits of data for each of the three
- * channel colors (red, green and blue).  The WS2812 LEDs typically expect the data to arrive in the
- * order of "green" then "red" then "blue".  However, this has been found to vary between some
- * models and manufacturers.  What this means is that some want "red", "green", "blue" and still others
- * have their own orders.  This function can be called to override the default ordering of "GRB".
- * We can specify
- * an alternate order by supply an alternate three character string made up of 'R', 'G' and 'B'
- * for example "RGB".
- *
- * Can also be set for RGBW strips, but the white component is always at the end.
- *
- */
-void Strip::setColorOrder(char* color_order) {
-	if (color_order != nullptr && strlen(color_order) == 3) {
-		this->color_order = color_order;
-	}
-} // setColorOrder
 
 
 /**
@@ -483,7 +345,7 @@ void RgbStrip::setPixel(uint16_t index, uint8_t red, uint8_t green, uint8_t blue
  *
  */
 void RgbwStrip::setPixel(uint16_t index, uint8_t red, uint8_t green, uint8_t blue) {
-	this->pixels[index] = this->rgbToRgbw({red, green, blue});
+	this->pixels[index] = this->rgb_to_rgbw({red, green, blue});
 } // setPixel
 
 /**
@@ -497,7 +359,7 @@ void RgbwStrip::setPixel(uint16_t index, uint8_t red, uint8_t green, uint8_t blu
  * @param pixel rgb pixel
  */
 void RgbwStrip::setPixel(uint16_t index, rgb_pixel pixel) {
-	this->pixels[index] = this->rgbToRgbw(pixel);
+	this->pixels[index] = this->rgb_to_rgbw(pixel);
 } // setPixel
 
 /**
@@ -587,7 +449,7 @@ void RgbwStrip::setPixel(uint16_t index, uint32_t pixel) {
  * @param brightness The amount of brightness in the pixel (0-1).
  */
 void RgbStrip::setHsbPixel(uint16_t index, float hue, float saturation, float brightness) {
-	this->pixels[index] = hsbToRgb(hue, saturation, brightness);
+	this->pixels[index] = hsb_to_rgb(hue, saturation, brightness);
 } // setHsbPixel
 
 /**
@@ -599,7 +461,7 @@ void RgbStrip::setHsbPixel(uint16_t index, float hue, float saturation, float br
  * @param hsb_pixel HSB colors.
  */
 void RgbStrip::setHsbPixel(uint16_t index, hsb_pixel hsb_pixel) {
-	this->pixels[index] = hsbToRgb(hsb_pixel.hue, hsb_pixel.saturation, hsb_pixel.brightness);
+	this->pixels[index] = hsb_to_rgb(hsb_pixel.hue, hsb_pixel.saturation, hsb_pixel.brightness);
 } // setHsbPixel
 
 /**
@@ -615,8 +477,8 @@ void RgbStrip::setHsbPixel(uint16_t index, hsb_pixel hsb_pixel) {
 void RgbwStrip::setHsbPixel(uint16_t index, hsb_pixel hsb_pixel) {
 	assert(index < pixel_count);
 
-	this->pixels[index] = rgbToRgbw(
-			hsbToRgb(hsb_pixel.hue, hsb_pixel.saturation, hsb_pixel.brightness)
+	this->pixels[index] = rgb_to_rgbw(
+			hsb_to_rgb(hsb_pixel.hue, hsb_pixel.saturation, hsb_pixel.brightness)
 			);
 } // setHsbPixel
 
@@ -636,7 +498,7 @@ void RgbwStrip::setHsbPixel(uint16_t index, hsb_pixel hsb_pixel) {
 void RgbwStrip::setHsbPixel(uint16_t index, float hue, float saturation, float brightness) {
 	assert(index < pixel_count);
 
-	this->pixels[index] = this->rgbToRgbw(hsbToRgb(hue, saturation, brightness));
+	this->pixels[index] = this->rgb_to_rgbw(hsb_to_rgb(hue, saturation, brightness));
 } // setHsbPixel
 
 
@@ -681,7 +543,7 @@ Strip::~Strip() {
  * @brief RgbStrip instance destructor.
  */
 RgbStrip::~RgbStrip() {
-	delete this->pixels;
+	delete[] this->pixels;
 }
 
 /**

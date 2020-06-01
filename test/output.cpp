@@ -4,7 +4,7 @@
 
 void test_serializer_rgb_output() {
 	rgb_pixel pixel {238, 7, 12};
-	RGB rgb;
+	auto rgb = RGB;
 	uint8_t output[3];
 
 	rgb.serialize(pixel, output);
@@ -16,7 +16,7 @@ void test_serializer_rgb_output() {
 
 void test_serializer_grb_output() {
 	rgb_pixel pixel {238, 7, 12};
-	GRB grb;
+	auto grb = GRB;
 	uint8_t output[3];
 
 	grb.serialize(pixel, output);
@@ -28,7 +28,7 @@ void test_serializer_grb_output() {
 
 void test_serializer_grbw_output() {
 	rgbw_pixel pixel {238, 7, 12, 75};
-	GRBW grbw;
+	auto grbw = GRBW;
 	uint8_t output[4];
 
 	grbw.serialize(pixel, output);

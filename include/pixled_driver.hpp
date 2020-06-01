@@ -10,7 +10,9 @@
 #include "pixel.hpp"
 #include "output.hpp"
 #include "converters.hpp"
+#include "strip_config.hpp"
 
+#define RGB_TO_RGBW_CONVERTER ComplexRgbToRgbwConverter
 
 static const char* PIXLED_LOG_TAG = "PIXLED_DRIVER";
 
@@ -91,19 +93,22 @@ static const char* PIXLED_LOG_TAG = "PIXLED_DRIVER";
  *
  */
 
+
 /**
  * @brief General and abstract led Strip class.
  */
 class Strip {
 	public:
-		Strip(gpio_num_t gpio_num, uint16_t pixel_count, int channel, uint8_t t0h, uint8_t t0l, uint8_t t1h, uint8_t t1l);
+		Strip(gpio_num_t gpio_num, uint16_t pixel_count, int channel, StripConfig& strip_config);
 		virtual void show() = 0;
-		void setColorOrder(char* order);
+
 		virtual void setPixel(uint16_t index, uint8_t red, uint8_t green, uint8_t blue) = 0;
 		virtual void setPixel(uint16_t index, uint32_t pixel) = 0;
 		virtual void setPixel(uint16_t index, rgb_pixel pixel) = 0;
+
 		virtual void setHsbPixel(uint16_t index, float hue, float saturation, float brightness) = 0;
 		virtual void setHsbPixel(uint16_t index, hsb_pixel pixel) = 0;
+
 		virtual void clear() = 0;
 		virtual ~Strip();
 
@@ -114,10 +119,14 @@ class Strip {
 		rmt_channel_t  channel;
 		rmt_item32_t*  items;
 
-		uint8_t t0h;
-		uint8_t t0l;
-		uint8_t t1h;
-		uint8_t t1l;
+		StripConfig& strip_config;
+/*
+ *
+ *        uint8_t t0h;
+ *        uint8_t t0l;
+ *        uint8_t t1h;
+ *        uint8_t t1l;
+ */
 
 		void setItem1(rmt_item32_t* pItem);
 		void setItem0(rmt_item32_t* pItem);
@@ -128,17 +137,22 @@ class Strip {
  */
 class RgbStrip: public Strip {
 	protected:
-		HsbToRgbConverter hsbToRgb;
+		RgbStripConfig rgb_strip_config;
+		HsbToRgbConverter hsb_to_rgb;
 
 	public:
-		RgbStrip(gpio_num_t gpio_num, uint16_t pixel_count, int channel, uint8_t t0h, uint8_t t0l, uint8_t t1h, uint8_t t1l);
+		RgbStrip(gpio_num_t gpio_num, uint16_t pixel_count, int channel, RgbStripConfig& config);
+		void show();
+
 		void setPixel(uint16_t index, uint8_t red, uint8_t green, uint8_t blue);
 		void setPixel(uint16_t index, rgb_pixel pixel);
 		void setPixel(uint16_t index, uint32_t pixel);
+
 		void setHsbPixel(uint16_t index, float hue, float saturation, float brightness);
 		void setHsbPixel(uint16_t index, hsb_pixel pixel);
+
 		void clear();
-		void show();
+
 		virtual ~RgbStrip();
 		rgb_pixel* pixels;
 };
@@ -148,7 +162,7 @@ class RgbStrip: public Strip {
  */
 class RgbwStrip:  public Strip {
 public:
-	RgbwStrip(gpio_num_t gpio_num, uint16_t pixel_count, int channel, uint8_t t0h, uint8_t t0l, uint8_t t1h, uint8_t t1l, RgbToRgbwConverter&& converter);
+	RgbwStrip(gpio_num_t gpio_num, uint16_t pixel_count, int channel, RgbwStripConfig& config);
 
 	void setPixel(uint16_t index, uint8_t red, uint8_t green, uint8_t blue);
 	void setPixel(uint16_t index, rgb_pixel pixel);
@@ -164,44 +178,53 @@ public:
 	void show();
 	//void setRgbToRgbwConverter(rgbw_pixel (*converter) (uint8_t, uint8_t, uint8_t));
 	virtual ~RgbwStrip();
-	rgbw_pixel* pixels;
 
 private:
-	HsbToRgbConverter hsbToRgb;
-	RgbToRgbwConverter& rgbToRgbw;
-	//rgbw_pixel (*rgb2rgbwConverter) (uint8_t, uint8_t, uint8_t);
+	RgbwStripConfig rgbw_strip_config;
+	HsbToRgbConverter hsb_to_rgb;
+	RGB_TO_RGBW_CONVERTER rgb_to_rgbw;
+
+	rgbw_pixel* pixels;
 };
 
 /**
  * @brief WS2812 RGB strip implementation.
  */
-class WS2812: public RgbStrip {
-public:
-	WS2812(gpio_num_t gpioNum, uint16_t pixelCount, int channel);
-};
+/*
+ *class WS2812: public RgbStrip {
+ *public:
+ *    WS2812(gpio_num_t gpioNum, uint16_t pixelCount, int channel);
+ *};
+ */
 
 /**
  * @brief WS2815 RGB strip implementation.
  */
-class WS2815: public RgbStrip {
-public:
-	WS2815(gpio_num_t gpioNum, uint16_t pixelCount, int channel);
-};
+/*
+ *class WS2815: public RgbStrip {
+ *public:
+ *    WS2815(gpio_num_t gpioNum, uint16_t pixelCount, int channel);
+ *};
+ */
 
 /**
  * @brief SK6812 RGB strip implementation.
  */
-class SK6812: public RgbStrip {
-public:
-	SK6812(gpio_num_t gpioNum, uint16_t pixelCount, int channel);
-};
+/*
+ *class SK6812: public RgbStrip {
+ *public:
+ *    SK6812(gpio_num_t gpioNum, uint16_t pixelCount, int channel);
+ *};
+ */
 
 /**
  * @brief SK2812 RGBW strip implementation.
  */
-class SK6812W: public RgbwStrip {
-public:
-	SK6812W(gpio_num_t gpioNum, uint16_t pixelCount, int channel);
-};
+/*
+ *class SK6812W: public RgbwStrip {
+ *public:
+ *    SK6812W(gpio_num_t gpioNum, uint16_t pixelCount, int channel);
+ *};
+ */
 
 #endif /* MAIN_LEDSTRIP_H_ */

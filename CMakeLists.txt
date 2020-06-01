@@ -15,7 +15,10 @@ if(PIXLED_DRIVER_TEST)
 else()
 	if(ESP_PLATFORM)
 		idf_component_register(
-			SRCS "src/pixled_driver.cpp" "src/converters.cpp"
+			SRCS 
+				"src/pixled_driver.cpp"
+				"src/converters.cpp"
+				"src/strip_config.cpp"
 			INCLUDE_DIRS "include"
 			)
 	else()
