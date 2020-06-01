@@ -1,9 +1,8 @@
-#include <driver/rmt.h>
-#include <driver/gpio.h>
-#include <string.h>
-
 #include "sdkconfig.h"
 #include "pixled_driver.h"
+
+#include <algorithm>
+#include <cstring>
 
 #if CONFIG_CXX_EXCEPTIONS != 1
 #error "C++ exception handling must be enabled within make menuconfig. See Compiler Options > Enable C++ Exceptions."

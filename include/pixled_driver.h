@@ -2,9 +2,6 @@
 #define PIXLED_DRIVER_H
 
 #include <stdint.h>
-#include <stdlib.h>
-#include <stdexcept>
-#include <algorithm>
 
 #include <driver/rmt.h>
 #include <driver/gpio.h>

@@ -12,7 +12,6 @@ if(PIXLED_DRIVER_STANDALONE)
 
 	project(pixled-driver-test)
 else()
-	message("hey")
 	idf_component_register(
 		SRCS "src/pixled_driver.cpp"
 		INCLUDE_DIRS "include"
