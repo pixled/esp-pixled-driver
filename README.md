@@ -33,15 +33,20 @@ And that's it.
 
 ## User repository
 
-An other method consists in cloning this repository into any user defined directory, using
+An other method consists in cloning this repository into any `user_directory`, using
 ```
 git clone https://github.com/pixled/esp-pixled-driver
 ```
 Then, the component can be imported into any esp-idf project with the following
 statement, added to the appropriate `CMakeLists.txt` :
 ```
-set(EXTRA_COMPONENT_DIRS /path/to/driver/installation/folder)
+set(EXTRA_COMPONENT_DIRS user_directory)
 ```
+or compiling with the following command :
+```
+idf.py -DEXTRA_COMPONENT_DIRS=user_directory build
+```
+Notice that `user_directory` is the *parent* folder of `esp-pixled-driver`, not the `esp-pixled-driver` folder itself (ie `user_directory/esp-pixled-driver`).
 
 ## Embedded in project
 
