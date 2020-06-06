@@ -4,11 +4,11 @@
 #include <stdint.h>
 
 #include <driver/rmt.h>
-
-//#include <stdint.h>
-//#include <stdlib.h>
-//#include <stdexcept>
-//#include <algorithm>
+#include "constants.hpp"
+#include "output.hpp"
+#include "pixel.hpp"
+#include "strip_config.hpp"
+#include "strip.hpp"
 
 /**
  * @mainpage ESP32 Led Strip Driver (RGB and RGBW)
@@ -86,51 +86,4 @@
  *  - at runtime, see RGBW_Strip::setRgbToRgbwConverter
  *
  */
-
-
-
-/**
- * @brief WS2812 RGB strip implementation.
- */
-/*
- *class WS2812: public RgbStrip {
- *public:
- *    WS2812(gpio_num_t gpioNum, uint16_t pixelCount, int channel);
- *};
- */
-
-/**
- * @brief WS2815 RGB strip implementation.
- */
-/*
- *class WS2815: public RgbStrip {
- *public:
- *    WS2815(gpio_num_t gpioNum, uint16_t pixelCount, int channel);
- *};
- */
-
-/**
- * @brief SK6812 RGB strip implementation.
- */
-/*
- *class SK6812: public RgbStrip {
- *public:
- *    SK6812(gpio_num_t gpioNum, uint16_t pixelCount, int channel);
- *};
- */
-
-/**
- * @brief SK2812 RGBW strip implementation.
- */
-/*
- *class SK6812W: public RgbwStrip {
- *public:
- *    SK6812W(gpio_num_t gpioNum, uint16_t pixelCount, int channel);
- *};
- */
-
-namespace pixled_driver {
-	void init(rmt_channel_t channel);
-
-}
 #endif /* MAIN_LEDSTRIP_H_ */

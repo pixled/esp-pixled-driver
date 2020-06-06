@@ -18,6 +18,10 @@ class RgbSerializer {
 			output[G] = pixel.green;
 			output[B] = pixel.blue;
 		};
+
+		bool operator==(const RgbSerializer& other) const {
+			return (R == other.R) && (G == other.G) && (B == other.B);
+		}
 };
 
 class RgbwSerializer {
@@ -35,6 +39,10 @@ class RgbwSerializer {
 			output[G] = pixel.green;
 			output[B] = pixel.blue;
 			output[W] = pixel.white;
+		}
+
+		bool operator==(const RgbwSerializer& other) const {
+			return (R == other.R) && (G == other.G) && (B == other.B) && (W == other.W);
 		}
 };
 #endif

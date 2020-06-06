@@ -17,6 +17,7 @@ else()
 		idf_component_register(
 			SRCS 
 				"src/pixled_driver.cpp"
+				"src/pixel.cpp"
 				"src/converters.cpp"
 				"src/strip_config.cpp"
 				"src/output.cpp"

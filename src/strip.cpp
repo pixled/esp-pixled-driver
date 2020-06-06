@@ -21,6 +21,7 @@ static const char* PIXLED_LOG_TAG = "PIXLED_DRIVER";
  * @param pItem rmt item to set to 1
  */
 void Strip::setItem1(rmt_item32_t* pItem) {
+	ESP_LOGD("RMT", "t1h %u t1l %u", strip_config.t1h, strip_config.t1l);
 	pItem->level0    = 1;
 	pItem->duration0 = strip_config.t1h;
 	pItem->level1    = 0;
@@ -43,6 +44,7 @@ void Strip::setItem1(rmt_item32_t* pItem) {
  * @param pItem rmt item to set to 0
  */
 void Strip::setItem0(rmt_item32_t* pItem) {
+	ESP_LOGD("RMT", "t0h %u t0l %u", strip_config.t0h, strip_config.t0l);
 	pItem->level0    = 1;
 	pItem->duration0 = strip_config.t0h;
 	pItem->level1    = 0;
@@ -79,24 +81,24 @@ void Strip::setTerminator(rmt_item32_t* pItem) {
  */
 Strip::Strip(
 		gpio_num_t gpio_num, uint16_t pixel_count, uint8_t* _buffer,
-		rmt_channel_t channel, rmt_item32_t* rmt_items, StripConfig& config)
+		rmt_channel_t channel, rmt_item32_t* rmt_items, StripConfig config)
 	: pixel_count(pixel_count), _buffer(_buffer), channel(channel), rmt_items(rmt_items), strip_config(config) {
+		rmt_config_t _rmt_config;
+		_rmt_config.rmt_mode                  = RMT_MODE_TX;
+		_rmt_config.channel                   = channel;
+		_rmt_config.gpio_num                  = gpio_num;
+		_rmt_config.mem_block_num             = 8 - channel;
+		_rmt_config.clk_div                   = 8;
+		_rmt_config.tx_config.loop_en         = 0;
+		_rmt_config.tx_config.carrier_en      = 0;
+		_rmt_config.tx_config.idle_output_en  = 1;
+		_rmt_config.tx_config.idle_level      = (rmt_idle_level_t) 0;
+		_rmt_config.tx_config.carrier_freq_hz = 10000;
+		_rmt_config.tx_config.carrier_level   = (rmt_carrier_level_t)1;
+		_rmt_config.tx_config.carrier_duty_percent = 50;
 
-	rmt_config_t _rmt_config;
-	_rmt_config.rmt_mode                  = RMT_MODE_TX;
-	_rmt_config.channel                   = this->channel;
-	_rmt_config.gpio_num                  = gpio_num;
-	_rmt_config.mem_block_num             = 8 - this->channel;
-	_rmt_config.clk_div                   = 8;
-	_rmt_config.tx_config.loop_en         = 0;
-	_rmt_config.tx_config.carrier_en      = 0;
-	_rmt_config.tx_config.idle_output_en  = 1;
-	_rmt_config.tx_config.idle_level      = (rmt_idle_level_t) 0;
-	_rmt_config.tx_config.carrier_freq_hz = 10000;
-	_rmt_config.tx_config.carrier_level   = (rmt_carrier_level_t)1;
-	_rmt_config.tx_config.carrier_duty_percent = 50;
-
-	ESP_ERROR_CHECK(rmt_config(&_rmt_config));
+		ESP_ERROR_CHECK(rmt_config(&_rmt_config));
+		ESP_ERROR_CHECK(rmt_driver_install(channel, 0, 0));
 } // Strip
 
 /**
@@ -104,6 +106,7 @@ Strip::Strip(
  */
 Strip::~Strip() {
 	delete[] this->rmt_items;
+	ESP_ERROR_CHECK(rmt_driver_uninstall(channel));
 } // ~Strip()
 
 /************/
@@ -139,23 +142,23 @@ RgbStrip::RgbStrip(gpio_num_t gpio_num, uint16_t pixel_count, rmt_channel_t chan
  * Drive the LEDs with the values that were previously set.
  */
 void RgbStrip::show() {
-	auto pCurrentItem = this->rmt_items;
+	rmt_item32_t* pCurrentItem = this->rmt_items;
 
 	for (uint16_t i = 0; i < this->pixel_count; i++) {
 		//uint8_t rgb[3];
 		//rgb_strip_config.serializer.serialize(this->pixels[i], rgb);
-		uint32_t currentPixel =
+		uint32_t current_pixel =
 				(_buffer[3*i] << 16) |
 				(_buffer[3*i+1] << 8)  |
 				_buffer[3*i+2];
 
-		ESP_LOGD(PIXLED_LOG_TAG, "Pixel value: %x", currentPixel);
+		ESP_LOGD(PIXLED_LOG_TAG, "Pixel value: %x", current_pixel);
 		for (int8_t j = 23; j >= 0; j--) {
 			// We have 24 bits of data representing the red, green amd blue channels. The value of the
 			// 24 bits to output is in the variable current_pixel.  We now need to stream this value
 			// through RMT in most significant bit first.  To do this, we iterate through each of the 24
 			// bits from MSB to LSB.
-			if (currentPixel & (1 << j)) {
+			if (current_pixel & (1 << j)) {
 				setItem1(pCurrentItem);
 			} else {
 				setItem0(pCurrentItem);
@@ -166,7 +169,7 @@ void RgbStrip::show() {
 	setTerminator(pCurrentItem); // Write the RMT terminator.
 
 	// Show the pixels.
-	ESP_ERROR_CHECK(rmt_write_items(this->channel, this->rmt_items, this->pixel_count * 24, 1 /* wait till done */));
+	ESP_ERROR_CHECK(rmt_write_items(this->channel, this->rmt_items, this->pixel_count * 24, 1 /*[> wait till done <]*/));
 } // show
 
 /**
@@ -278,24 +281,26 @@ RgbwStrip::RgbwStrip(gpio_num_t gpio_num, uint16_t pixel_count, rmt_channel_t ch
  * Drive the LEDs with the values that were previously set.
  */
 void RgbwStrip::show() {
-	auto pCurrentItem = this->rmt_items;
+	rmt_item32_t* pCurrentItem = this->rmt_items;
 
 	for (uint16_t i = 0; i < this->pixel_count; i++) {
 		//uint8_t rgbw[4];
 		//rgbw_strip_config.serializer.serialize(pixels[i], rgbw);
-		uint32_t currentPixel =
+		uint32_t current_pixel =
 				(_buffer[4*i] << 24) |
 				(_buffer[4*i+1] << 16) |
 				(_buffer[4*i+2] << 8) |
 				_buffer[4*i+3];
 
-		ESP_LOGD(PIXLED_LOG_TAG, "Pixel value: %x", currentPixel);
+		ESP_LOGD("RMT", "RGBW t0h %u t0l %u", rgbw_strip_config.t0h, strip_config.t0l);
+		ESP_LOGD("RMT", "RGBW t1h %u t1l %u", rgbw_strip_config.t1h, strip_config.t1l);
+		ESP_LOGD(PIXLED_LOG_TAG, "RGBW Pixel value: %x", current_pixel);
 		for (int8_t j = 31; j >= 0; j--) {
 			// We have 32 bits of data representing the red, green, blue and white channels. The value of the
 			// 32 bits to output is in the variable current_pixel.  We now need to stream this value
 			// through RMT in most significant bit first.  To do this, we iterate through each of the 32
 			// bits from MSB to LSB.
-			if (currentPixel & (1 << j)) {
+			if (current_pixel & (1 << j)) {
 				setItem1(pCurrentItem);
 			} else {
 				setItem0(pCurrentItem);
