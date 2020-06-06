@@ -1,3 +1,5 @@
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
 
 // Color orders
 #define RGB RgbSerializer(0, 1, 2);
@@ -68,3 +70,4 @@
 
 // Strip configs
 #define WS2812_CONFIG RgbStripConfig(GBR, WS2812_T0H, WS2812_T0L, WS2812_T1H, WS2815_T1L)
+#endif

@@ -12,7 +12,7 @@
  */
 class HsbToRgbConverter {
 	public:
-		rgb_pixel operator()(float, float, float) const;
+		rgb_pixel operator()(const hsb_pixel&) const;
 };
 
 class RgbToRgbwConverter {

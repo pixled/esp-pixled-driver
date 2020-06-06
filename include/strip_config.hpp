@@ -1,3 +1,6 @@
+#ifndef STRIP_CONFIG_H
+#define STRIP_CONFIG_H
+
 #include "output.hpp"
 
 struct StripConfig {
@@ -23,3 +26,4 @@ struct RgbwStripConfig : public StripConfig {
 
 	RgbwSerializer serializer;
 };
+#endif

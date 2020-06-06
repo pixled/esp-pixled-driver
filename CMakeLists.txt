@@ -19,6 +19,8 @@ else()
 				"src/pixled_driver.cpp"
 				"src/converters.cpp"
 				"src/strip_config.cpp"
+				"src/output.cpp"
+				"src/strip.cpp"
 			INCLUDE_DIRS "include"
 			)
 	else()

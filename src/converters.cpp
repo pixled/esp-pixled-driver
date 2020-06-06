@@ -1,12 +1,16 @@
 #include "converters.hpp"
 #include <algorithm>
 
-rgb_pixel HsbToRgbConverter::operator()(float hue, float saturation, float brightness) const {
+rgb_pixel HsbToRgbConverter::operator()(const hsb_pixel& pixel) const {
 	double      hh, p, q, t, ff;
 	long        i;
 	double      r_out;
 	double      g_out;
 	double 	    b_out;
+
+	float hue = pixel.hue;
+	float saturation = pixel.saturation;
+	float brightness = pixel.brightness;
 
 	if(saturation <= 0.0) {       // < is bogus, just shuts up warnings
 			r_out = brightness;

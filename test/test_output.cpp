@@ -1,6 +1,7 @@
-#include "pixled_driver.hpp"
-#include "output.hpp"
 #include "unity.h"
+
+#include "output.hpp"
+#include "constants.hpp"
 
 void test_serializer_rgb_output() {
 	rgb_pixel pixel {238, 7, 12};
