@@ -87,7 +87,8 @@ Strip::Strip(
 		_rmt_config.rmt_mode                  = RMT_MODE_TX;
 		_rmt_config.channel                   = channel;
 		_rmt_config.gpio_num                  = gpio_num;
-		_rmt_config.mem_block_num             = 8 - channel;
+		//_rmt_config.mem_block_num             = 8 - channel;
+		_rmt_config.mem_block_num             = 1;
 		_rmt_config.clk_div                   = 8;
 		_rmt_config.tx_config.loop_en         = 0;
 		_rmt_config.tx_config.carrier_en      = 0;
@@ -145,8 +146,6 @@ void RgbStrip::show() {
 	rmt_item32_t* pCurrentItem = this->rmt_items;
 
 	for (uint16_t i = 0; i < this->pixel_count; i++) {
-		//uint8_t rgb[3];
-		//rgb_strip_config.serializer.serialize(this->pixels[i], rgb);
 		uint32_t current_pixel =
 				(_buffer[3*i] << 16) |
 				(_buffer[3*i+1] << 8)  |
