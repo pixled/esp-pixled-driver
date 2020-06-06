@@ -26,15 +26,33 @@ class Strip {
 		uint16_t length() {return pixel_count;}
 		virtual void show() = 0;
 
-		virtual void setPixel(uint16_t index, uint8_t red, uint8_t green, uint8_t blue) = 0;
-
+		virtual void setRgbPixel(uint16_t index, uint8_t red, uint8_t green, uint8_t blue) = 0;
 		virtual void setHsbPixel(uint16_t index, float hue, float saturation, float brightness) = 0;
-		virtual void setHsbPixel(uint16_t index, hsb_pixel pixel) = 0;
 
+		/**
+		 * Returns a pointer to the internal buffer.
+		 *
+		 * The corresponding data is modified by all the set*Pixel functions,
+		 * and transmitted to the leds with strip.show().
+		 *
+		 * It is allowed to directly write in the buffer, for performance
+		 * reason. In that case, it is the responsibility of the user to
+		 * respect color orders and buffer size, according to the led strip in
+		 * use.
+		 *
+		 * @return internal buffer color buffer
+		 */
 		uint8_t* const& buffer() {return _buffer;}
+
 		virtual void clear() = 0;
 
+		/**
+		 * Returns the strip config currently in use.
+		 *
+		 * @return strip config (t0h, t0l, t1h, t1l)
+		 */
 		const StripConfig& stripConfig() const {return strip_config;}
+
 		virtual ~Strip();
 
 	protected:
@@ -72,13 +90,16 @@ class RgbStrip: public Strip {
 
 		void show() override;
 
-		void setPixel(uint16_t index, uint8_t red, uint8_t green, uint8_t blue) override;
-
+		void setRgbPixel(uint16_t index, uint8_t red, uint8_t green, uint8_t blue) override;
 		void setHsbPixel(uint16_t index, float hue, float saturation, float brightness) override;
-		void setHsbPixel(uint16_t index, hsb_pixel pixel) override;
 
 		void clear() override;
 
+		/**
+		 * Returns the strip config currently in use.
+		 *
+		 * @return strip config (t0h, t0l, t1h, t1l, RGB output order)
+		 */
 		const RgbStripConfig& rgbStripConfig() const {return rgb_strip_config;}
 
 		virtual ~RgbStrip();
@@ -97,16 +118,17 @@ public:
 
 	void show() override;
 
-	void setPixel(uint16_t index, uint8_t red, uint8_t green, uint8_t blue) override;
-	void setPixel(uint16_t index, rgbw_pixel pixel);
-
+	void setRgbPixel(uint16_t index, uint8_t red, uint8_t green, uint8_t blue) override;
 	void setHsbPixel(uint16_t index, float hue, float saturation, float brightness) override;
-	void setHsbPixel(uint16_t index, hsb_pixel pixel) override;
-
-	void setPixel(uint16_t index, uint8_t red, uint8_t green, uint8_t blue, uint8_t white);
+	void setRgbwPixel(uint16_t index, uint8_t red, uint8_t green, uint8_t blue, uint8_t white);
 
 	void clear() override;
 
+	/**
+	 * Returns the strip config currently in use.
+	 *
+	 * @return strip config (t0h, t0l, t1h, t1l, RGBW output order)
+	 */
 	const RgbwStripConfig& rgbwStripConfig() const {return rgbw_strip_config;}
 
 	virtual ~RgbwStrip();

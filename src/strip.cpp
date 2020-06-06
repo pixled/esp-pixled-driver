@@ -8,20 +8,19 @@ static const char* PIXLED_LOG_TAG = "PIXLED_DRIVER";
 /*********/
 
 /**
- * @brief Set up RMT strip value 1.
+ * Sets up RMT strip value 1.
  *
- * Set two levels of RMT output to the Neopixel value for a "1".
+ * Sets two levels of RMT output for a "1".
  * This is:
  * 	- a logic 1 during t1h
  * 	- a logic 0 during t1l
  *
  * t1h and t1l are retrieved from the current strip, depending
- * on its model.
+ * on its type.
  *
  * @param pItem rmt item to set to 1
  */
 void Strip::setItem1(rmt_item32_t* pItem) {
-	ESP_LOGD("RMT", "t1h %u t1l %u", strip_config.t1h, strip_config.t1l);
 	pItem->level0    = 1;
 	pItem->duration0 = strip_config.t1h;
 	pItem->level1    = 0;
@@ -31,9 +30,9 @@ void Strip::setItem1(rmt_item32_t* pItem) {
 
 
 /**
- * @brief Set up RMT strip value 0.
+ * Sets up RMT strip value 0.
  *
- * Set two levels of RMT output to the Neopixel value for a "0".
+ * Sets two levels of RMT output for a "0".
  * This is:
  * a logic 1 for t0h
  * a logic 0 for t0l
@@ -44,15 +43,14 @@ void Strip::setItem1(rmt_item32_t* pItem) {
  * @param pItem rmt item to set to 0
  */
 void Strip::setItem0(rmt_item32_t* pItem) {
-	ESP_LOGD("RMT", "t0h %u t0l %u", strip_config.t0h, strip_config.t0l);
 	pItem->level0    = 1;
 	pItem->duration0 = strip_config.t0h;
 	pItem->level1    = 0;
 	pItem->duration1 = strip_config.t0l;
 } // setItem0
 
-/*
- * Add an RMT terminator into the RMT data.
+/**
+ * Adds an RMT terminator into the RMT data.
  */
 void Strip::setTerminator(rmt_item32_t* pItem) {
 	pItem->level0    = 0;
@@ -62,21 +60,21 @@ void Strip::setTerminator(rmt_item32_t* pItem) {
 } // setTerminator
 
 /**
- * @brief Construct a wrapper for the pixels.
+ * Strip constructor.
  *
- * Set up all the RMT driver and other common parameters for every strip types.
-
+ * Sets up all the RMT driver and other common parameters for every strip types.
+ * The RMT channel specified is configured for this strip instance, and should
+ * not be used for other purpose (including an other led strip).
+ *
  * Because Strip is abstract, this constructor should not be used directly, but
- * will be call by implementing classes (WS2812, SK6812W...) with correct time
- * values.
+ * will be call by implementing classes (RgbStrip, RgbwStrip).
  *
- * @param gpioNum Led Strip GPIO.
+ * @param gpio_num Led Strip GPIO. See https://docs.espressif.com/projects/esp-idf/en/stable/api-reference/peripherals/gpio.html#_CPPv410gpio_num_t
  * @param pixel_count Number of leds.
- * @param channel RMT channel to use. See https://docs.espressif.com/projects/esp-idf/en/latest/api-reference/peripherals/rmt.html#enumerations
- * @param t0h high value duration for bit 0, expressed in RMT ticks.
- * @param t0l low value duration for bit 0, expressed in RMT ticks.
- * @param t1h high value duration for bit 1, expressed in RMT ticks.
- * @param t1l low value duration for bit 0, expressed in RMT ticks.
+ * @param channel RMT channel to use. See https://docs.espressif.com/projects/esp-idf/en/stable/api-reference/peripherals/rmt.html#_CPPv413rmt_channel_t
+ * @param rmt_items dynamically allocated rmt buffer, according to the led type
+ * and the strip length
+ * @param config strip config, defined t0h, t0l, t1h and t1l
  *
  */
 Strip::Strip(
@@ -103,7 +101,10 @@ Strip::Strip(
 } // Strip
 
 /**
- * @brief Strip instance destructor.
+ * Strip instance destructor.
+ *
+ * Uninstalls the RMT driver from the RMT channel currently in use, so that it
+ * can be re-used.
  */
 Strip::~Strip() {
 	delete[] this->rmt_items;
@@ -115,19 +116,29 @@ Strip::~Strip() {
 /************/
 
 /**
- * @brief RgbStrip constructor.
+ * RgbStrip constructor.
  *
- * Notice that several strips can be connected, but they must be connected on different RMT channels.
- * You shouldn't need to call this class directly, but you can use it to drive
- * other led strips not currently supported, with custom duration values.
+ * Class used to drive RGB led strips.
  *
- * @param gpioNum Led Strip GPIO.
+ * The `config` is used to define all the hardware specific parameters :
+ * - t0h, t0l, t1h and t1l. See the StripConfig doc to learn how to manually
+ *   define those parameters.
+ * - RGB serializer : defines the output order (RGB, GBR, etc...)
+ *
+ * Predefined configurations are available for the following RGB LED strip models :
+ * - WS2812
+ * - WS2815
+ * - SK6812
+ *
+ * Example usage :
+ * ```
+ * RgbStrip strip {GPIO_NUM_12, 20, RMT_CHANNEL_0, WS2812()};
+ * ```
+ *
+ * @param gpio_num Led Strip GPIO. See https://docs.espressif.com/projects/esp-idf/en/stable/api-reference/peripherals/gpio.html#_CPPv410gpio_num_t
  * @param pixel_count Number of leds.
- * @param channel RMT channel to use. See https://docs.espressif.com/projects/esp-idf/en/latest/api-reference/peripherals/rmt.html#enumerations
- * @param t0h high value duration for bit 0, expressed in RMT ticks.
- * @param t0l low value duration for bit 0, expressed in RMT ticks.
- * @param t1h high value duration for bit 1, expressed in RMT ticks.
- * @param t1l low value duration for bit 0, expressed in RMT ticks.
+ * @param channel RMT channel to use. See https://docs.espressif.com/projects/esp-idf/en/stable/api-reference/peripherals/rmt.html#_CPPv413rmt_channel_t
+ * @param config RGB strip config
  */
 RgbStrip::RgbStrip(gpio_num_t gpio_num, uint16_t pixel_count, rmt_channel_t channel, RgbStripConfig config) :
 	Strip(
@@ -138,9 +149,7 @@ RgbStrip::RgbStrip(gpio_num_t gpio_num, uint16_t pixel_count, rmt_channel_t chan
 	};
 
 /**
- * @brief Show the current pixel data for RGB strips.
- *
- * Drive the LEDs with the values that were previously set.
+ * Transmits the current buffer to the RGB strip.
  */
 void RgbStrip::show() {
 	rmt_item32_t* pCurrentItem = this->rmt_items;
@@ -172,29 +181,35 @@ void RgbStrip::show() {
 } // show
 
 /**
- * @brief Set the given pixel to the specified color for RGB strips.
+ * Sets the value of the led at position `index` with the specified RGB values.
  *
  * The LEDs are not actually updated until a call to show().
  *
- * @param index The pixel that is to have its color set.
- * @param red The amount of red in the pixel, between 0 and 255.
- * @param green The amount of green in the pixel, between 0 and 255.
- * @param blue The amount of blue in the pixel, between 0 and 255.
+ * Data is directly written into the internal buffer, according to the current
+ * output order.
+ *
+ * @param index position of the led
+ * @param red red value, between 0 and 255.
+ * @param green green value, between 0 and 255.
+ * @param blue blue value, between 0 and 255.
  *
  */
-void RgbStrip::setPixel(uint16_t index, uint8_t red, uint8_t green, uint8_t blue) {
+void RgbStrip::setRgbPixel(uint16_t index, uint8_t red, uint8_t green, uint8_t blue) {
 	rgb_strip_config.serializer.serialize({red, green, blue}, &_buffer[index*3]);
-} // setPixel
+} // setRgbPixel
 
 /**
- * @brief Set the given pixel to the specified HSB color for an RGB strip.
+ * Sets the value of the led at position `index` with the specified HSB values.
  *
  * The LEDs are not actually updated until a call to show().
  *
+ * Data is directly converted to RGB and written into the internal buffer,
+ * according to the current output order.
+ *
  * @param index The pixel that is to have its color set.
- * @param hue The amount of hue in the pixel (0-360).
- * @param saturation The amount of saturation in the pixel (0-1).
- * @param brightness The amount of brightness in the pixel (0-1).
+ * @param hue hue value between 0 and 360.
+ * @param saturation saturation value, between 0 and 1.
+ * @param brightness brightness value, between 0 and 1.
  */
 void RgbStrip::setHsbPixel(uint16_t index, float hue, float saturation, float brightness) {
 	rgb_strip_config.serializer.serialize(
@@ -203,21 +218,10 @@ void RgbStrip::setHsbPixel(uint16_t index, float hue, float saturation, float br
 } // setHsbPixel
 
 /**
- * @brief Set the given pixel to the specified HSB color for an RGB strip.
- *
- * The LEDs are not actually updated until a call to show().
- *
- * @param index The pixel that is to have its color set.
- * @param hsb_pixel HSB colors.
- */
-void RgbStrip::setHsbPixel(uint16_t index, hsb_pixel hsb_pixel) {
-	rgb_strip_config.serializer.serialize(hsb_to_rgb(hsb_pixel), &_buffer[index*3]);
-} // setHsbPixel
-
-/**
- * @brief Clear all the pixel colors for an RGB strip.
+ * Clears all the pixel colors.
  *
  * This sets all the pixels to off which is no brightness for all of the color channels.
+ *
  * The LEDs are not actually updated until a call to show().
  */
 void RgbStrip::clear() {
@@ -229,7 +233,9 @@ void RgbStrip::clear() {
 } // clear
 
 /**
- * @brief RgbStrip instance destructor.
+ * RgbStrip destructor.
+ *
+ * The internal buffer is deleted, and should not be accessed any more.
  */
 RgbStrip::~RgbStrip() {
 	delete[] this->_buffer;
@@ -240,20 +246,38 @@ RgbStrip::~RgbStrip() {
 /*************/
 
 /**
-* @brief RgbwStrip constructor.
-*
-* Notice that several strips can be connected, but they must be connected on different RMT channels.
-* You shouldn't need to call this class directly, but you can use it to drive
-* other led strips not currently supported, with custom duration values.
-*
-* @param gpioNum Led Strip GPIO.
-* @param pixel_count Number of leds.
-* @param channel RMT channel to use. See https://docs.espressif.com/projects/esp-idf/en/latest/api-reference/peripherals/rmt.html#enumerations
-* @param t0h high value duration for bit 0, expressed in RMT ticks.
-* @param t0l low value duration for bit 0, expressed in RMT ticks.
-* @param t1h high value duration for bit 1, expressed in RMT ticks.
-* @param t1l low value duration for bit 0, expressed in RMT ticks.
-*/
+ * RgbwStrip constructor.
+ *
+ * Class used to drive RGB led strips.
+ *
+ * The `config` is used to define all the hardware specific parameters :
+ * - t0h, t0l, t1h and t1l. See the StripConfig doc to learn how to manually
+ *   define those parameters.
+ * - RGBW serializer : defines the output order (RGBW, GBRW, etc...)
+ *
+ * Predefined configurations are available for the following RGBW LED strip models :
+ * - SK6812W
+ *
+ * Notice that the class inherits from the Strip functions, so does the
+ * RgbStrip class. In consequence, the same code might be used to drive RGB or
+ * RGBW strips using the common strip interface. The difference is that when
+ * setRgbPixel is used on a RGBW strip, the RGB color is efficiently converted
+ * to an RGBW color to take advantage of the additional white LED.
+ *
+ * Additionally, the setRgbwPixel can be used to manually control the white
+ * LED.
+ *
+ * Example usage :
+ * ```
+ * RgbwStrip strip {GPIO_NUM_12, 20, RMT_CHANNEL_0, SK6812W()};
+ * ```
+ *
+ * @param gpio_num Led Strip GPIO. See https://docs.espressif.com/projects/esp-idf/en/stable/api-reference/peripherals/gpio.html#_CPPv410gpio_num_t
+ * @param pixel_count Number of leds.
+ * @param channel RMT channel to use. See https://docs.espressif.com/projects/esp-idf/en/stable/api-reference/peripherals/rmt.html#_CPPv413rmt_channel_t
+ * @param config RGBW strip config
+ *
+ */
 RgbwStrip::RgbwStrip(gpio_num_t gpio_num, uint16_t pixel_count, rmt_channel_t channel, RgbwStripConfig config):
 	Strip(
 			gpio_num, pixel_count, new uint8_t[pixel_count*4],
@@ -275,24 +299,18 @@ RgbwStrip::RgbwStrip(gpio_num_t gpio_num, uint16_t pixel_count, rmt_channel_t ch
 	};
 
 /**
- * @brief Show the current pixel data for RGBW strips.
- *
- * Drive the LEDs with the values that were previously set.
+ * Transmits the current buffer to the RGBW strip.
  */
 void RgbwStrip::show() {
 	rmt_item32_t* pCurrentItem = this->rmt_items;
 
 	for (uint16_t i = 0; i < this->pixel_count; i++) {
-		//uint8_t rgbw[4];
-		//rgbw_strip_config.serializer.serialize(pixels[i], rgbw);
 		uint32_t current_pixel =
 				(_buffer[4*i] << 24) |
 				(_buffer[4*i+1] << 16) |
 				(_buffer[4*i+2] << 8) |
 				_buffer[4*i+3];
 
-		ESP_LOGD("RMT", "RGBW t0h %u t0l %u", rgbw_strip_config.t0h, strip_config.t0l);
-		ESP_LOGD("RMT", "RGBW t1h %u t1l %u", rgbw_strip_config.t1h, strip_config.t1l);
 		ESP_LOGD(PIXLED_LOG_TAG, "RGBW Pixel value: %x", current_pixel);
 		for (int8_t j = 31; j >= 0; j--) {
 			// We have 32 bits of data representing the red, green, blue and white channels. The value of the
@@ -314,79 +332,53 @@ void RgbwStrip::show() {
 } // show
 
 /**
- * @brief Set the given pixel to the specified color for RGBW strips.
- *
- * The RGBtoRGBW converter is used to convert from RGB to RGBW.
+ * Sets the value of the led at position `index` with the specified RGB values.
  *
  * The LEDs are not actually updated until a call to show().
  *
- * @param index The pixel that is to have its color set.
- * @param red The amount of red in the pixel, between 0 and 255.
- * @param green The amount of green in the pixel, between 0 and 255.
- * @param blue The amount of blue in the pixel, between 0 and 255.
+ * Data is directly converted to RGBW and written into the internal buffer,
+ * according to the current output order.
+ *
+ * @param index position of the led
+ * @param red red value, between 0 and 255.
+ * @param green green value, between 0 and 255.
+ * @param blue blue value, between 0 and 255.
  *
  */
-void RgbwStrip::setPixel(uint16_t index, uint8_t red, uint8_t green, uint8_t blue) {
+void RgbwStrip::setRgbPixel(uint16_t index, uint8_t red, uint8_t green, uint8_t blue) {
 	rgbw_strip_config.serializer.serialize(rgb_to_rgbw({red, green, blue}), &_buffer[index*4]);
-} // setPixel
+} // setRgbPixel
 
 /**
- * @brief Set the given pixel to the specified color for RGBW strips.
+ * Sets the value of the led at position `index` with the specified RGBW values.
  *
  * The LEDs are not actually updated until a call to show().
  *
- * @param index The pixel that is to have its color set.
- * @param red The amount of red in the pixel, between 0 and 255.
- * @param green The amount of green in the pixel, between 0 and 255.
- * @param blue The amount of blue in the pixel, between 0 and 255.
- * @param white The amount of white in the pixel, between 0 and 255.
+ * Data is directly written into the internal buffer, according to the current
+ * output order.
+ *
+ * @param index position of the led
+ * @param red red value, between 0 and 255.
+ * @param green green value, between 0 and 255.
+ * @param blue blue value, between 0 and 255.
+ * @param white white value, between 0 and 255.
  */
-void RgbwStrip::setPixel(uint16_t index, uint8_t red, uint8_t green, uint8_t blue, uint8_t white) {
+void RgbwStrip::setRgbwPixel(uint16_t index, uint8_t red, uint8_t green, uint8_t blue, uint8_t white) {
 	rgbw_strip_config.serializer.serialize({red, green, blue, white}, &_buffer[index*4]);
-} // setPixel
+} // setRgbPixel
 
 /**
- * @brief Set the given pixel to the specified color for RGBW strip.
+ * Sets the value of the led at position `index` with the specified HSB values.
  *
  * The LEDs are not actually updated until a call to show().
  *
- * @param index The pixel that is to have its color set.
- * @param pixel The RGBW color value of the pixel.
- */
-void RgbwStrip::setPixel(uint16_t index, rgbw_pixel pixel) {
-	rgbw_strip_config.serializer.serialize(pixel, &_buffer[index*4]);
-} // setPixel
-
-/**
- * @brief Set the given pixel to the specified HSB color for an RGBW strip.
- *
- * Compute the RGB value from HSB, and then the RGBW value from RGB.
- *
- * The LEDs are not actually updated until a call to show().
+ * Data is directly converted from HSB to RGB, from RGB to RGBW, and written
+ * into the internal buffer, according to the current output order.
  *
  * @param index The pixel that is to have its color set.
- * @param hsb_pixel HSB colors.
- */
-void RgbwStrip::setHsbPixel(uint16_t index, hsb_pixel hsb_pixel) {
-	rgbw_strip_config.serializer.serialize(rgb_to_rgbw(
-			hsb_to_rgb(hsb_pixel)
-			),
-			&_buffer[index*4]
-			);
-} // setHsbPixel
-
-
-/**
- * @brief Set the given pixel to the specified HSB color for an RGBW strip.
- *
- * Compute the RGB value from HSB, and then the RGBW value from RGB.
- *
- * The LEDs are not actually updated until a call to show().
- *
- * @param index The pixel that is to have its color set.
- * @param hue The amount of hue in the pixel (0-360).
- * @param saturation The amount of saturation in the pixel (0-1).
- * @param brightness The amount of brightness in the pixel (0-1).
+ * @param hue hue value between 0 and 360.
+ * @param saturation saturation value, between 0 and 1.
+ * @param brightness brightness value, between 0 and 1.
  */
 void RgbwStrip::setHsbPixel(uint16_t index, float hue, float saturation, float brightness) {
 	rgbw_strip_config.serializer.serialize(
@@ -396,9 +388,10 @@ void RgbwStrip::setHsbPixel(uint16_t index, float hue, float saturation, float b
 } // setHsbPixel
 
 /**
- * @brief Clear all the pixel colors for an RGBW strip.
+ * Clears all the pixel colors.
  *
  * This sets all the pixels to off which is no brightness for all of the color channels.
+ *
  * The LEDs are not actually updated until a call to show().
  */
 void RgbwStrip::clear() {
@@ -411,7 +404,9 @@ void RgbwStrip::clear() {
 } // clear
 
 /**
- * @brief RgbwStrip instance destructor.
+ * RgbStrip destructor.
+ *
+ * The internal buffer is deleted, and should not be accessed any more.
  */
 RgbwStrip::~RgbwStrip() {
 	delete[] this->_buffer;

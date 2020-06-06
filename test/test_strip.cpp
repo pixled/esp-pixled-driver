@@ -10,7 +10,7 @@ void test_rgb_strip_set_rgb() {
 	RgbStrip strip {GPIO_NUM_12, 10, RMT_CHANNEL_0, {serializer, 10, 10, 10, 10}};
 
 	for(int i = 0; i < 10; i++) {
-		strip.setPixel(i, 10*i, 10*i+1, 10*i+2);
+		strip.setRgbPixel(i, 10*i, 10*i+1, 10*i+2);
 	}
 	uint8_t* buffer = strip.buffer();
 	for(int i = 0; i < strip.length(); i++) {
@@ -25,7 +25,7 @@ void test_gbr_strip_set_rgb() {
 	RgbStrip strip {GPIO_NUM_12, 10, RMT_CHANNEL_0, {serializer, 10, 10, 10, 10}};
 
 	for(int i = 0; i < 10; i++) {
-		strip.setPixel(i, 10*i, 10*i+1, 10*i+2);
+		strip.setRgbPixel(i, 10*i, 10*i+1, 10*i+2);
 	}
 	uint8_t* buffer = strip.buffer();
 	for(int i = 0; i < strip.length(); i++) {
@@ -58,7 +58,7 @@ void test_rgbw_strip_set_rgbw() {
 	RgbwStrip strip {GPIO_NUM_12, 10, RMT_CHANNEL_0, {serializer, 10, 10, 10, 10}};
 
 	for(int i = 0; i < 10; i++) {
-		strip.setPixel(i, 10*i, 10*i+1, 10*i+2, 10*i+3);
+		strip.setRgbwPixel(i, 10*i, 10*i+1, 10*i+2, 10*i+3);
 	}
 	uint8_t* buffer = strip.buffer();
 	for(int i = 0; i < strip.length(); i++) {
@@ -77,7 +77,7 @@ void test_gbrw_strip_set_rgbw() {
 	RgbwStrip strip {GPIO_NUM_12, 10, RMT_CHANNEL_0, {serializer, 10, 10, 10, 10}};
 
 	for(int i = 0; i < 10; i++) {
-		strip.setPixel(i, 10*i, 10*i+1, 10*i+2, 10*i+3);
+		strip.setRgbwPixel(i, 10*i, 10*i+1, 10*i+2, 10*i+3);
 	}
 	uint8_t* buffer = strip.buffer();
 	for(int i = 0; i < strip.length(); i++) {
@@ -96,7 +96,7 @@ void test_gbrw_strip_set_rgb() {
 	RgbwStrip strip {GPIO_NUM_12, 10, RMT_CHANNEL_0, {serializer, 10, 10, 10, 10}};
 
 	for(int i = 0; i < 10; i++) {
-		strip.setPixel(i, 10*i, 10*i+1, 10*i+2);
+		strip.setRgbPixel(i, 10*i, 10*i+1, 10*i+2);
 	}
 	uint8_t* buffer = strip.buffer();
 	for(int i = 0; i < strip.length(); i++) {
