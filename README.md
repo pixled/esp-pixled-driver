@@ -49,13 +49,6 @@ idf.py -DEXTRA_COMPONENT_DIRS=user_directory build
 ```
 Notice that `user_directory` is the *parent* folder of `esp-pixled-driver`, not the `esp-pixled-driver` folder itself (ie `user_directory/esp-pixled-driver`).
 
-## Embedded in project
-
-Finally, the project can be embedded directly in a project using a GitHub
-submodule.
-
-// TODO
-
 # Usage
 ## Load the component
 
@@ -75,7 +68,7 @@ idf_component_register(SRCS "my_component.cpp"
 Once the component has been properly installed and loaded, the library can be included
 using the following statement : 
 ```
-#include "pixled_driver.h"
+#include "pixled_driver.hpp"
 ```
 ## Drive led strips
 ### Example usage
@@ -108,3 +101,24 @@ extern 'C' void app_main() {
     }
 }
 ```
+
+### Strip interface
+Any led strip can be controlled using the following generic interface :
+#### `strip.setRgbPixel(int index, uint8_t red, uint8_t green, uint8_t blue)`
+With red, green, blue in [0-255]
+
+#### `strip.setHsbPixel(int index, float hue, float saturation, float brightness)`
+With hue in [0,360], saturation, brightness in [0,1] 
+
+#### `strip.clear()`
+Sets all the colors to (0, 0, 0).
+
+#### `strip.show()`
+Transmits the internal buffer to the LEDs.
+
+### RGBW Strip specific
+Additionally, the following function is available **only** for RGBW strips, to manually control the white LED :
+
+#### `strip.setRgbwPixel(int index, uint8_t red, uint8_t green, uint8_t blue, uint8_t white)`
+With red, green, blue in [0-255]. Note that it is **not required** to use this function to use the white LED!
+It is recommended to use the `setRgbPixel` function even on RGBW strips, to efficiently convert RGB colors to RGBW and smartly use the available white LED.
