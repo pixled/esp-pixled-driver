@@ -71,6 +71,31 @@ using the following statement :
 #include "pixled_driver.hpp"
 ```
 ## Drive led strips
+A Strip can be built using the following constructors :
+#### `RgbStrip(gpio_num_t gpio, uint16_t length, rmt_channel_t channel, RgbConfig config)`
+Builds an RGB strip.
+#### `RgbStrip(gpio_num_t gpio, uint16_t length, RgbConfig config)`
+Same as before, using default RMT channel RMT_CHANNEL_0.
+#### `RgbwStrip(gpio_num_t gpio, uint16_t length, rmt_channel_t channel, RgbwConfig config)`
+Builds an RGBW strip.
+#### `RgbwStrip(gpio_num_t gpio, uint16_t length, RgbConfig config)`
+Same as before, using default RMT channel RMT_CHANNEL_0.
+
+### Predefined led types
+The following predefined classes can be used to as the `config` parameter :
+RGB strips | RGBW strips
+-----------|------------
+WS2812() | SK6812W()
+WS2815() |
+SK6812() |
+
+### Custom LED types
+However, the library can be used to drive any user defined led type.
+To do so, the appropriate config must be defined.
+Two things must be known, that can be find in the corresponding LED datasheet :
+- Color output order : RGB, GBR, GBRW, etc...
+- T0H, T0L, T1H, T1L constants, in nS. (Typically in the order of 100nS)
+
 ### Example usage
 ```
 #include "pixled_driver.hpp"
