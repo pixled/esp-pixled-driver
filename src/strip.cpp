@@ -149,6 +149,19 @@ RgbStrip::RgbStrip(gpio_num_t gpio_num, uint16_t pixel_count, rmt_channel_t chan
 	};
 
 /**
+ * RgbStrip constructor with a default RMT channel set to RMT_CHANNEL_0.
+ *
+ * Same as RgbStrip(gpio_num, pixel_count, RMT_CHANNEL_0, config).
+ * 
+ * @param gpio_num Led Strip GPIO. See https://docs.espressif.com/projects/esp-idf/en/stable/api-reference/peripherals/gpio.html#_CPPv410gpio_num_t
+ * @param pixel_count Number of leds.
+ * @param config RGB strip config
+ */
+RgbStrip::RgbStrip(gpio_num_t gpio_num, uint16_t pixel_count, RgbStripConfig config) :
+	RgbStrip(gpio_num, pixel_count, RMT_CHANNEL_0, config) {
+};
+
+/**
  * Transmits the current buffer to the RGB strip.
  */
 void RgbStrip::show() {
@@ -297,6 +310,17 @@ RgbwStrip::RgbwStrip(gpio_num_t gpio_num, uint16_t pixel_count, rmt_channel_t ch
 		 */
 		clear();
 	};
+/**
+ * RgbwStrip constructor with a default RMT channel set to RMT_CHANNEL_0.
+ *
+ * Same as RgbwStrip(gpio_num, pixel_count, RMT_CHANNEL_0, config).
+ * 
+ * @param gpio_num Led Strip GPIO. See https://docs.espressif.com/projects/esp-idf/en/stable/api-reference/peripherals/gpio.html#_CPPv410gpio_num_t
+ * @param pixel_count Number of leds.
+ * @param config RGBW strip config
+ */
+RgbwStrip::RgbwStrip(gpio_num_t gpio_num, uint16_t pixel_count, RgbwStripConfig config)
+	: RgbwStrip(gpio_num, pixel_count, RMT_CHANNEL_0, config) {}
 
 /**
  * Transmits the current buffer to the RGBW strip.

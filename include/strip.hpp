@@ -14,7 +14,7 @@
 #define RGB_TO_RGBW_CONVERTER ComplexRgbToRgbwConverter
 
 /**
- * @brief General and abstract led Strip class.
+ * General and abstract led Strip class.
  */
 class Strip {
 	public:
@@ -83,6 +83,8 @@ class RgbStrip: public Strip {
 
 	public:
 		RgbStrip(gpio_num_t gpio_num, uint16_t pixel_count, rmt_channel_t channel, RgbStripConfig config);
+		RgbStrip(gpio_num_t gpio_num, uint16_t pixel_count, RgbStripConfig config);
+
 		RgbStrip(const RgbStrip&) = delete;
 		RgbStrip(RgbStrip&&) = delete;
 		RgbStrip& operator=(const RgbStrip&) = delete;
@@ -111,6 +113,8 @@ class RgbStrip: public Strip {
 class RgbwStrip:  public Strip {
 public:
 	RgbwStrip(gpio_num_t gpio_num, uint16_t pixel_count, rmt_channel_t channel, RgbwStripConfig config);
+	RgbwStrip(gpio_num_t gpio_num, uint16_t pixel_count, RgbwStripConfig config);
+
 	RgbwStrip(const RgbwStrip&) = delete;
 	RgbwStrip(RgbwStrip&&) = delete;
 	RgbwStrip& operator=(const RgbwStrip&) = delete;
