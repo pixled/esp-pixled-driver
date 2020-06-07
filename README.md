@@ -89,12 +89,8 @@ WS2812() | SK6812W()
 WS2815() |
 SK6812() |
 
-### Custom LED types
-However, the library can be used to drive any user defined led type.
-To do so, the appropriate config must be defined.
-Two things must be known, that can be find in the corresponding LED datasheet :
-- Color output order : RGB, GBR, GBRW, etc...
-- T0H, T0L, T1H, T1L constants, in nS. (Typically in the order of 100nS)
+The library can also be used to drive any existing led type. See the [Using
+custom LED types](#using-custom-led-types) section to learn how.
 
 ### Example usage
 ```
@@ -104,26 +100,26 @@ Two things must be known, that can be find in the corresponding LED datasheet :
 #define LED_COUNT 16
 
 extern 'C' void app_main() {
-    // Initiates an RGB WS2812 Led strip on GPIO 12, on default RMT_CHANNEL_0
-    RgbStrip rgb {GPIO_NUM_12, length, WS2812()};
-    
-    // Initiates an RGBW SK6812W Led strip on GPIO 14, on RMT channel RMT_CHANNEL_1
-    RgbwStrip rgbw {GPIO_NUM_14, length, RMT_CHANNEL_1, SK6812()};
-    
-    while(1) {
-    	for(int h = 0; h < 360; h++) {
-	    for(int i = 0; i < LED_COUNT; i++) {
-	    	// HSB is converted to RGB
-	        rgb.setHsbPixel(i, h, 0.6, 0.4);
-		// HSB is converted to RGBW
-		rgbw.setHsbPixel(i, h, 0.6, 0.4);
-	    }
-	    rgb.show();
-	    rgbw.show();
-	
-             vTaskDelay(50 / portTICK_PERIOD_MS);
+	// Initiates an RGB WS2812 Led strip on GPIO 12, on default RMT_CHANNEL_0
+	RgbStrip rgb {GPIO_NUM_12, length, WS2812()};
+
+	// Initiates an RGBW SK6812W Led strip on GPIO 14, on RMT channel RMT_CHANNEL_1
+	RgbwStrip rgbw {GPIO_NUM_14, length, RMT_CHANNEL_1, SK6812()};
+
+	while(1) {
+		for(int h = 0; h < 360; h++) {
+			for(int i = 0; i < LED_COUNT; i++) {
+				// HSB is converted to RGB
+				rgb.setHsbPixel(i, h, 0.6, 0.4);
+				// HSB is converted to RGBW
+				rgbw.setHsbPixel(i, h, 0.6, 0.4);
+			}
+			rgb.show();
+			rgbw.show();
+
+			vTaskDelay(50 / portTICK_PERIOD_MS);
+		}
 	}
-    }
 }
 ```
 
@@ -178,3 +174,50 @@ extern 'C' void app_main() {
     rgbw.show();
 }
 ```
+
+# Advanced use
+## Using custom LED types
+The library can also be used to drive **any** user defined led type.
+
+To do so, the appropriate `config` must be defined.
+Two things must be known, that can be find in the corresponding LED datasheet :
+- Color output order : RGB, GBR, GBRW, etc...
+- T0H, T0L, T1H, T1L constants, in nS. (Typically in the order of 100nS)
+
+A custom configuration can be defined as follow :
+```
+#define CUSTOM_T0H 200
+#define CUSTOM_T0L 300
+#define CUSTOM_T1H 200
+#define CUSTOM_T1L 400
+
+extern 'C' void app_main() {
+	// Custom RGB strip config
+	RgbStripConfig rgb_config {GBR, CUSTOM_T0H, CUSTOM_T0L, CUSTOM_T1H, CUSTOM_T1L};
+	// Custom RGBW strip config
+	RgbwStripConfig rgb_config {GBRW, CUSTOM_T0H, CUSTOM_T0L, CUSTOM_T1H, CUSTOM_T1L};
+
+	RgbStrip rgb {GPIO_NUM_12, 20, RMT_CHANNEL_0, rgb_config};
+
+	RgbwStrip rgbw {GPIO_NUM_14, 20, RMT_CHANNEL_1, rgbw_config};
+}
+```
+
+The custom config can also be wrapped in a custom class :
+```
+#define CUSTOM_T0H 200
+#define CUSTOM_T0L 300
+#define CUSTOM_T1H 200
+#define CUSTOM_T1L 400
+
+struct CUSTOM_RGB : public RgbStripConfig {
+	CUSTOM_RGB()
+		: RgbStripConfig(GBR, CUSTOM_T0H, CUSTOM_T0L, CUSTOM_T1H, CUSTOM_T1L)
+		{}
+}
+
+extern 'C' void app_main() {
+	RgbStrip rgb {GPIO_NUM_12, 20, RMT_CHANNEL_0, CUSTOM_RGB()};
+}
+```
+
