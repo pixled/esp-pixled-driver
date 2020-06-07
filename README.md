@@ -4,9 +4,10 @@ A standalone
 [esp-idf](https://docs.espressif.com/projects/esp-idf/en/stable/index.html)
 component to drive RGB / RGBW led strip.
 
-Features :
-- Support for any LED strip hardware
-- RGBW support : classical RGB colors can be converted to RGBW colors to take
+- [x] Common `Strip` interface, to seamlessly drive RGB and RGBW LED strips
+- [x] Efficient esp-idf implementation (based on RMT)
+- [x] Support for **any** LED strip hardware
+- [x] True RGBW support : classical RGB colors are converted to RGBW to take
 	full advantage of the white LED.
 
 # Installation
@@ -77,4 +78,33 @@ using the following statement :
 #include "pixled_driver.h"
 ```
 ## Drive led strips
-// TODO
+### Example usage
+```
+#include "pixled_driver.hpp"
+#include "freertos/task.h"
+
+#define LED_COUNT 16
+
+extern 'C' void app_main() {
+    // Initiates an RGB WS2812 Led strip on GPIO 12, on default RMT_CHANNEL_0
+    RgbStrip rgb {GPIO_NUM_12, length, WS2812()};
+    
+    // Initiates an RGBW SK6812W Led strip on GPIO 14, on RMT channel RMT_CHANNEL_1
+    RgbwStrip rgbw {GPIO_NUM_14, length, RMT_CHANNEL_1, SK6812()};
+    
+    while(1) {
+    	for(int h = 0; h < 360; h++) {
+	    for(int i = 0; i < LED_COUNT; i++) {
+	    	// HSB is converted to RGB
+	        rgb.setHsbPixel(i, h, 0.6, 0.4);
+		// HSB is converted to RGBW
+		rgbw.setHsbPixel(i, h, 0.6, 0.4);
+	    }
+	    rgb.show();
+	    rgbw.show();
+	
+             vTaskDelay(50 / portTICK_PERIOD_MS);
+	}
+    }
+}
+```
