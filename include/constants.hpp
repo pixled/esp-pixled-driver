@@ -41,6 +41,7 @@
 #define RMT_DIVIDER 8
 #define RMT_CLOCK 8 //80Mhz, 80000000Hz
 #define RMT_RATIO (RMT_CLOCK / RMT_DIVIDER) / 100 // Deduced from nS to S convertion : (([nS]) / 1000000000) * 80000000 / 8, simplified to avoid int overflow
+#define NS_TO_RMT_TICKS(NS) NS * RMT_RATIO
 
 // Delays in nS
 
