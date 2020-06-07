@@ -122,3 +122,34 @@ Additionally, the following function is available **only** for RGBW strips, to m
 #### `strip.setRgbwPixel(int index, uint8_t red, uint8_t green, uint8_t blue, uint8_t white)`
 With red, green, blue in [0-255]. Note that it is **not required** to use this function to use the white LED!
 It is recommended to use the `setRgbPixel` function even on RGBW strips, to efficiently convert RGB colors to RGBW and smartly use the available white LED.
+
+## Efficiently use the generic Strip interface
+One of the main interest of this library is the ability to seamlessly drive **any** type of led hardware thanks to a generic interface.
+This allows to write generic code, for example to generate animations, that will be compatible with every strips.
+
+```
+#include "pixled_driver.hpp"
+
+void animate(Strip& strip) {
+   uint8_t r = /*something*/;
+   uint8_t g = /*something*/;
+   uint8_t b = /*something*/;
+   
+   // Genertic setRgb function.
+   // Different internal behavior according to the actual led type.
+   strip.setRgb(r, g, b);
+}
+
+extern 'C' void app_main() {
+    RgbStrip rgb {GPIO_NUM_12, length, WS2812()};
+    RgbwStrip rgbw {GPIO_NUM_14, length, RMT_CHANNEL_1, SK6812()};
+    
+    // The same function can be used to control any strip.
+    // In the case of rgbw, RGB colors are automatically converted to RGBW
+    animate(rgb);
+    animate(rgbw);
+    
+    rgb.show();
+    rgbw.show();
+}
+```
