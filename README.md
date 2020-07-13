@@ -69,6 +69,8 @@ Once the component has been properly installed and loaded, the library can be in
 using the following statement : 
 ```
 #include "pixled_driver.hpp"
+
+using namespace pixled;
 ```
 ## Drive led strips
 A Strip can be built using the following constructors :
@@ -98,6 +100,8 @@ custom LED types](#using-custom-led-types) section to learn how.
 #include "freertos/task.h"
 
 #define LED_COUNT 16
+
+using namespace pixled;
 
 extern 'C' void app_main() {
 	// Initiates an RGB WS2812 Led strip on GPIO 12, on default RMT_CHANNEL_0
@@ -150,6 +154,8 @@ This allows to write generic code, for example to generate animations, that will
 
 ```
 #include "pixled_driver.hpp"
+
+using namespace pixled;
 
 void animate(Strip& strip) {
    uint8_t r = /*something*/;
