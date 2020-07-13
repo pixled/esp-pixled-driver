@@ -3,6 +3,8 @@
 #include "output.hpp"
 #include "constants.hpp"
 
+using namespace pixled;
+
 void test_serializer_rgb_output() {
 	rgb_pixel pixel {238, 7, 12};
 	auto rgb = RGB;

@@ -5,6 +5,8 @@
 #include "strip_config.hpp"
 #include "constants.hpp"
 
+using namespace pixled;
+
 void test_rgb_strip_set_rgb() {
 	auto serializer = RGB;
 	RgbStrip strip {GPIO_NUM_12, 10, RMT_CHANNEL_0, {serializer, 10, 10, 10, 10}};

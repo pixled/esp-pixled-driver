@@ -4,6 +4,8 @@
 #include "strip_config.hpp"
 #include "strip.hpp"
 
+using namespace pixled;
+
 template<typename Config>
 void test_rgb(RgbSerializer serializer, uint32_t t0h, uint32_t t0l, uint32_t t1h, uint32_t t1l) {
 	RgbStrip rgb_strip(GPIO_NUM_12, 50, RMT_CHANNEL_0, Config());
