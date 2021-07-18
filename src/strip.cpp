@@ -92,9 +92,9 @@ namespace pixled {
 			_rmt_config.tx_config.loop_en         = 0;
 			_rmt_config.tx_config.carrier_en      = 0;
 			_rmt_config.tx_config.idle_output_en  = 1;
-			_rmt_config.tx_config.idle_level      = (rmt_idle_level_t) 0;
+			_rmt_config.tx_config.idle_level      = RMT_IDLE_LEVEL_LOW;
 			_rmt_config.tx_config.carrier_freq_hz = 10000;
-			_rmt_config.tx_config.carrier_level   = (rmt_carrier_level_t)1;
+			_rmt_config.tx_config.carrier_level   = RMT_CARRIER_LEVEL_HIGH;
 			_rmt_config.tx_config.carrier_duty_percent = 50;
 
 			ESP_ERROR_CHECK(rmt_config(&_rmt_config));
