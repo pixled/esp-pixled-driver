@@ -73,6 +73,7 @@ using the following statement :
 using namespace pixled;
 ```
 ## Drive led strips
+
 A Strip can be built using the following constructors :
 #### `RgbStrip(gpio_num_t gpio, uint16_t length, rmt_channel_t channel, RgbConfig config)`
 Builds an RGB strip.
@@ -83,8 +84,15 @@ Builds an RGBW strip.
 #### `RgbwStrip(gpio_num_t gpio, uint16_t length, RgbConfig config)`
 Same as before, using default RMT channel RMT_CHANNEL_0.
 
+### RMT Channel
+
+The `channel` parameter must correspond to one of the 8 [RMT
+channels](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/peripherals/rmt.html#_CPPv413rmt_channel_t)
+available. Only a single led strip can be bound to each RMT channel.
+
 ### Predefined led types
-The following predefined classes can be used to as the `config` parameter :
+
+The following predefined classes can be used as the `config` parameter:
 RGB strips | RGBW strips
 -----------|------------
 WS2812() | SK6812W()
@@ -145,8 +153,14 @@ Transmits the internal buffer to the LEDs.
 Additionally, the following function is available **only** for RGBW strips, to manually control the white LED :
 
 #### `strip.setRgbwPixel(int index, uint8_t red, uint8_t green, uint8_t blue, uint8_t white)`
-With red, green, blue in [0-255]. Note that it is **not required** to use this function to use the white LED!
-It is recommended to use the `setRgbPixel` function even on RGBW strips, to efficiently convert RGB colors to RGBW and smartly use the available white LED.
+With red, green, blue in [0-255].
+
+Note that it is **not required** to use this function to use the white LED! It
+is recommended to use the `setRgbPixel()` function even on RGBW strips, to
+efficiently convert RGB colors to RGBW and smartly use the available white LED.
+
+Moreover, the `setHsbPixel()` method apply to an `RgbwStrip` automatically takes
+advantage of the white LED.
 
 ## Efficiently use the generic Strip interface
 One of the main interest of this library is the ability to seamlessly drive **any** type of led hardware thanks to a generic interface.
