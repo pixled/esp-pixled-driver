@@ -18,6 +18,8 @@ namespace pixled {
 	 * General and abstract led Strip class.
 	 */
 	class Strip {
+		private:
+			rmt_config_t _rmt_config;
 		public:
 
 			Strip(

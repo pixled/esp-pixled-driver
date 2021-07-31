@@ -82,7 +82,6 @@ namespace pixled {
 			gpio_num_t gpio_num, uint16_t pixel_count, uint8_t* _buffer,
 			rmt_channel_t channel, rmt_item32_t* rmt_items, StripConfig config)
 		: pixel_count(pixel_count), _buffer(_buffer), channel(channel), rmt_items(rmt_items), strip_config(config) {
-			rmt_config_t _rmt_config;
 			_rmt_config.rmt_mode                  = RMT_MODE_TX;
 			_rmt_config.channel                   = channel;
 			_rmt_config.gpio_num                  = gpio_num;
